@@ -46,8 +46,7 @@ This document provides detailed information about the endpoints available in the
   "message": "Registration successful. Verification code sent to email.",
   "data": {
     "name": "John Doe",
-    "email": "john.doe@example.com",
-    "token": "<generated_token>"
+    "email": "john.doe@example.com"
   }
 }
 ```
@@ -77,6 +76,27 @@ This document provides detailed information about the endpoints available in the
     "role": "user",
     "token": "<generated_token>"
   }
+}
+```
+
+### Logout
+**Endpoint**: `POST /auth/logout.php`
+
+**Description**: Logs out the current user by invalidating their token in the database.
+
+**Request Body**:
+```json
+{
+  "token": "<user_token>"
+}
+```
+
+**Response**:
+```json
+{
+  "status": true,
+  "message": "Logout successful",
+  "data": null
 }
 ```
 

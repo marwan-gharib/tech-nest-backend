@@ -1,7 +1,6 @@
 <?php
 include "../config.php";
 
-// Token and admin check
 $user = validateToken($conn, $_POST['token'] ?? null);
 checkAdmin($conn, $user['id']);
 

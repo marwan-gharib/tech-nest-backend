@@ -7,6 +7,7 @@ echo json_encode([
     "endpoints" => [
         "auth/login.php" => "Login endpoint",
         "auth/register.php" => "Register endpoint",
+        "auth/logout.php" => "Logout endpoint",
         "cart/add.php" => "Add to cart",
         "cart/list.php" => "List cart items",
         "cart/remove.php" => "Remove from cart",
