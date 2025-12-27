@@ -11,6 +11,7 @@ This is the backend for an e-commerce application. It provides various endpoints
   - [Orders](#orders)
   - [Products](#products)
 - [Error Handling](#error-handling)
+- [Token-Based Authentication](#token-based-authentication)
 
 ## Setup
 1. Clone the repository.
@@ -41,7 +42,8 @@ This is the backend for an e-commerce application. It provides various endpoints
         "id": 1,
         "name": "John Doe",
         "email": "user@example.com",
-        "role": "user"
+        "role": "user",
+        "token": "<generated_token>"
       }
     }
     ```
@@ -55,7 +57,7 @@ This is the backend for an e-commerce application. It provides various endpoints
     ```
 
 #### `POST /auth/register.php`
-- **Description**: Registers a new user.
+- **Description**: Registers a new user and sends a verification code to their email.
 - **Request Body**:
   ```json
   {
@@ -263,19 +265,30 @@ This is the backend for an e-commerce application. It provides various endpoints
     "name": "Laptop",
     "description": "A high-end laptop",
     "price": 1500,
-    "stock": 12,
+    "stock": 10,
     "category_id": 1,
-    "image_url": "http://example.com/laptop.jpg"
+    "img": "<base64_encoded_image>"
   }
   ```
+  - `img`: Base64-encoded image string. If provided, the image will be saved and its URL stored in the database.
+
 - **Response**:
-  ```json
-  {
-    "status": true,
-    "message": "Product added successfully",
-    "data": null
-  }
-  ```
+  - **Success**:
+    ```json
+    {
+      "status": true,
+      "message": "Product added successfully",
+      "data": null
+    }
+    ```
+  - **Failure**:
+    ```json
+    {
+      "status": false,
+      "message": "Failed to add product",
+      "error": "Error details"
+    }
+    ```
 
 #### `GET /products/list.php`
 - **Description**: Retrieves all products.
@@ -297,6 +310,44 @@ This is the backend for an e-commerce application. It provides various endpoints
     ]
   }
   ```
+
+### Email Verification
+
+#### `POST /auth/register.php`
+- **Description**: Registers a new user and sends a verification code to their email.
+- **Notes**: The user is saved as unverified until they verify their email.
+
+#### `POST /auth/verify_email.php`
+- **Description**: Verifies the user's email using the verification code.
+- **Request Body**:
+  ```json
+  {
+    "email": "user@example.com",
+    "verification_code": 123456
+  }
+  ```
+- **Response**:
+  - **Success**:
+    ```json
+    {
+      "status": true,
+      "message": "Email verified successfully.",
+      "data": {
+        "id": 1,
+        "name": "John Doe",
+        "email": "user@example.com",
+        "role": "user"
+      }
+    }
+    ```
+  - **Failure**:
+    ```json
+    {
+      "status": false,
+      "message": "Invalid verification code or email.",
+      "data": null
+    }
+    ```
 
 ## Error Handling
 - All endpoints return a `status` field indicating success (`true`) or failure (`false`).
@@ -348,3 +399,44 @@ This is the backend for an e-commerce application. It provides various endpoints
   - `categories/update.php`: Validates `name` field.
   - `products/update.php`: Validates `name`, `description`, and `price` fields.
   - `cart/add.php`: Validates `quantity` field.
+
+### Token-Based Authentication
+
+#### Overview
+- Tokens are used to authenticate users for protected endpoints.
+- A token is generated upon successful login and must be included in the request headers or body for subsequent requests.
+
+#### Token Generation
+- **Endpoint**: `POST /auth/login.php`
+- **Response**:
+  ```json
+  {
+    "status": true,
+    "message": "Login successful",
+    "data": {
+      "id": 1,
+      "name": "John Doe",
+      "email": "user@example.com",
+      "role": "user",
+      "token": "<generated_token>"
+    }
+  }
+  ```
+
+#### Token Validation
+- Tokens are validated for all protected endpoints using the `validateToken` function.
+- If the token is invalid or missing, the request is denied.
+
+#### Example Usage
+- Include the token in the request body or headers:
+  ```json
+  {
+    "token": "<user_token>",
+    "other_field": "value"
+  }
+  ```
+
+#### Protected Endpoints
+- `POST /products/add.php`
+- `POST /products/update.php`
+- `POST /products/delete.php`

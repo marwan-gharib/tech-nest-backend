@@ -3,10 +3,19 @@ include "../config.php";
 
 $data = json_decode(file_get_contents("php://input"), true);
 
-if (empty($data['name']) || empty($data['password'])) {
+if (empty($data['name']) || empty($data['email']) || empty($data['password'])) {
     echo json_encode([
         "status" => false,
-        "message" => "Name and password are required",
+        "message" => "All fields are required",
+        "data" => null
+    ]);
+    exit;
+}
+
+if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+    echo json_encode([
+        "status" => false,
+        "message" => "Invalid email format",
         "data" => null
     ]);
     exit;
@@ -23,19 +32,24 @@ if ($stmt->fetch(PDO::FETCH_ASSOC)) {
     exit;
 }
 
+$verification_code = rand(100000, 999999);
+
 $stmt = $conn->prepare(
-    "INSERT INTO users (`name`,email,`password`,`role`)
-     VALUES (?,?,?, 'user')"
+    "INSERT INTO users (`name`, email, `password`, `role`, `verification_code`, `is_verified`)
+     VALUES (?, ?, ?, 'user', ?, 0)"
 );
 
 $stmt->execute([
     $data['name'],
     $data['email'],
-    password_hash($data['password'], PASSWORD_DEFAULT)
+    password_hash($data['password'], PASSWORD_DEFAULT),
+    $verification_code
 ]);
+
+mail($data['email'], "Your Verification Code", "Your verification code is: $verification_code");
 
 echo json_encode([
     "status" => true,
-    "message" => "Registration successful",
+    "message" => "Registration successful. Please verify your email.",
     "data" => null
 ]);

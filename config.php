@@ -11,7 +11,7 @@ $db_pass = getenv('DB_PASS') ?: '';
 $conn = new PDO(
     "mysql:host=$db_host;dbname=$db_name",
     $db_user,
-    $db_pass
+    $db_pass,
 );
 
 // Set PDO to throw exceptions on errors
@@ -32,4 +32,22 @@ function checkAdmin($conn, $user_id) {
         ]);
         exit;
     }
+}
+
+// Function to validate tokens for protected endpoints
+function validateToken($conn, $token) {
+    $stmt = $conn->prepare("SELECT * FROM users WHERE token=?");
+    $stmt->execute([$token]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$user) {
+        echo json_encode([
+            "status" => false,
+            "message" => "Invalid or missing token",
+            "data" => null
+        ]);
+        exit;
+    }
+
+    return $user;
 }
