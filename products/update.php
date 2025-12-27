@@ -39,12 +39,18 @@ if (isset($_FILES['image']) && $_FILES['image']['error'] === 0) {
         exit;
     }
 
-    $image_name = uniqid() . "." . $ext;
-    $image_path = "uploads/" . $image_name;
-
-    if (!move_uploaded_file($_FILES['image']['tmp_name'], "../" . $image_path)) {
-        echo json_encode(["status"=>false,"message"=>"Failed to upload image"]);
-        exit;
+    // Deduplicate by content hash
+    $hash = hash_file('sha256', $_FILES['image']['tmp_name']);
+    $existing = glob($upload_dir . $hash . '.*');
+    if ($existing && count($existing) > 0) {
+        $image_path = 'uploads/' . basename($existing[0]);
+    } else {
+        $image_name = $hash . "." . $ext;
+        $image_path = "uploads/" . $image_name;
+        if (!move_uploaded_file($_FILES['image']['tmp_name'], "../" . $image_path)) {
+            echo json_encode(["status"=>false,"message"=>"Failed to upload image"]);
+            exit;
+        }
     }
 } else {
     $stmt = $conn->prepare("SELECT image_url FROM products WHERE id=?");

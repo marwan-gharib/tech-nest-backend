@@ -12,19 +12,27 @@ if (!is_numeric($data['quantity']) || $data['quantity'] <= 0) {
     exit;
 }
 
-$user = validateToken($conn, $data['token']);
+$user = validateToken($conn, $data['token'] ?? null);
 
-$stmt = $conn->prepare(
-    "INSERT INTO cart (user_id,product_id,quantity)
-     VALUES (?,?,?)"
-);
+$check = $conn->prepare("SELECT id, quantity FROM cart WHERE user_id=? AND product_id=? LIMIT 1");
+$check->execute([$user['id'], $data['product_id']]);
+$existing = $check->fetch(PDO::FETCH_ASSOC);
 
 try {
-    $stmt->execute([
-        $data['user_id'],
-        $data['product_id'],
-        $data['quantity']
-    ]);
+    if ($existing) {
+        $update = $conn->prepare("UPDATE cart SET quantity = quantity + ? WHERE id = ?");
+        $update->execute([$data['quantity'], $existing['id']]);
+    } else {
+        $stmt = $conn->prepare(
+            "INSERT INTO cart (user_id,product_id,quantity)
+             VALUES (?,?,?)"
+        );
+        $stmt->execute([
+            $user['id'],
+            $data['product_id'],
+            $data['quantity']
+        ]);
+    }
 
     echo json_encode([
         "status" => true,

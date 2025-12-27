@@ -1,12 +1,11 @@
 <?php
 include "../config.php";
 
-$user_id = $_GET['user_id'];
-$user = validateToken($conn, $_GET['token']);
+$user = validateToken($conn, $_GET['token'] ?? null);
 
 $stmt = $conn->prepare("SELECT * FROM cart WHERE user_id=?");
 try {
-    $stmt->execute([$user_id]);
+    $stmt->execute([$user['id']]);
 
     echo json_encode([
         "status" => true,

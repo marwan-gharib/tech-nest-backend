@@ -363,3 +363,37 @@ This document provides detailed information about the endpoints available in the
   "data": null
 }
 ```
+
+---
+
+## Conventions & Policies
+
+### Authorization Rules
+- Public (no token): `products/list.php`, `categories/list.php`, `index.php`.
+- User token required: `cart/add.php`, `cart/list.php`, `cart/remove.php`.
+- Admin token required: `products/add.php`, `products/update.php`, `products/delete.php`, `categories/add.php`, `categories/update.php`, `categories/delete.php`.
+
+### Input Formats & Content Types
+- `products/add.php` and `products/update.php` accept `multipart/form-data` for image upload with a `token` field in the form.
+- `categories/*` and `cart/*` accept `application/json` bodies including a `token` field.
+- `products/list.php` and `categories/list.php` are simple `GET` endpoints.
+
+### Image Upload & Dedup Policy
+- When uploading a product image, the backend computes a SHA-256 hash of the image content and stores it once under `uploads/<hash>.<ext>`.
+- If an identical image has already been uploaded, the existing file is reused and no duplicate file is saved.
+- Supported image types: `jpg`, `jpeg`, `png`, `webp`.
+
+### Cart Behavior
+- Adding the same `product_id` for the same user increases `quantity` on the existing cart item instead of creating a duplicate row.
+- Cart listing uses the user derived from the `token` (ignores any client-provided `user_id`).
+
+### Error Handling & Response Shape
+- All endpoints return JSON with a consistent shape:
+  - `status`: boolean
+  - `message`: human-readable status
+  - `data`: payload or `null`
+  - `error`: included only on failures with internal error messages
+
+### Security Notes
+- The backend derives the authenticated user exclusively from the `token`; client-supplied identifiers (like `user_id`) are ignored for protected endpoints.
+- Admin-only endpoints perform a role check and deny access for non-admin users.

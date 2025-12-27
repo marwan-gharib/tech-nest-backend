@@ -3,12 +3,19 @@ include "../config.php";
 
 $data = json_decode(file_get_contents("php://input"), true);
 
-$user = validateToken($conn, $data['token']);
+$user = validateToken($conn, $data['token'] ?? null);
 checkAdmin($conn, $user['id']);
 
 $name = trim($data['name']);
+if ($name === '') {
+    echo json_encode([
+        "status" => false,
+        "message" => "Category name is required",
+        "data" => null
+    ]);
+    exit;
+}
 
-// Prevent duplicate category names (case-insensitive)
 $dup = $conn->prepare("SELECT id FROM categories WHERE LOWER(name) = LOWER(?) LIMIT 1");
 $dup->execute([$name]);
 if ($dup->fetch(PDO::FETCH_ASSOC)) {
