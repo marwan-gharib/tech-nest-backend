@@ -252,43 +252,6 @@ This is the backend for an e-commerce application. It provides various endpoints
   }
   ```
 
-### Orders
-
-#### `POST /orders/create.php`
-- **Description**: Creates a new order.
-- **Request Body**:
-  ```json
-  {
-    "user_id": 1,
-    "total": 200.5
-  }
-  ```
-- **Response**:
-  ```json
-  {
-    "status": true,
-    "message": "Order created successfully",
-    "data": null
-  }
-  ```
-
-#### `GET /orders/list.php?user_id=1`
-- **Description**: Retrieves all orders for a user.
-- **Response**:
-  ```json
-  {
-    "status": true,
-    "message": "Orders retrieved successfully",
-    "data": [
-      {
-        "id": 1,
-        "user_id": 1,
-        "total": 200.5
-      }
-    ]
-  }
-  ```
-
 ### Products
 
 #### `POST /products/add.php`
