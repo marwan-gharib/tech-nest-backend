@@ -82,6 +82,65 @@ This is the backend for an e-commerce application. It provides various endpoints
     }
     ```
 
+### Social Login
+
+#### `POST /auth/social_login.php`
+- **Description**: Authenticates a user using social login (Google or Facebook). If the user does not exist, they are registered automatically.
+- **Request Body**:
+  ```json
+  {
+    "email": "user@example.com",
+    "name": "John Doe",
+    "provider": "google",
+    "social_id": "1234567890"
+  }
+  ```
+  - `email`: The email address of the user.
+  - `name`: The name of the user.
+  - `provider`: The social login provider (e.g., `google` or `facebook`).
+  - `social_id`: The unique identifier provided by the social login provider.
+
+- **Response**:
+  - **Success** (User already exists):
+    ```json
+    {
+      "status": true,
+      "message": "User already exists",
+      "data": {
+        "id": 1,
+        "name": "John Doe",
+        "email": "user@example.com",
+        "role": "user"
+      }
+    }
+    ```
+  - **Success** (New user registered):
+    ```json
+    {
+      "status": true,
+      "message": "User registered successfully",
+      "data": {
+        "id": 2,
+        "name": "John Doe",
+        "email": "user@example.com"
+      }
+    }
+    ```
+  - **Failure**:
+    ```json
+    {
+      "status": false,
+      "message": "Invalid data"
+    }
+    ```
+
+- **Differences from Regular Login**:
+  1. **No Password Required**: Social login does not require a password. Instead, it relies on the `social_id` provided by the social login provider.
+  2. **Automatic Registration**: If the user does not exist, they are automatically registered with the provided `name`, `email`, and `social_id`.
+  3. **Provider-Specific IDs**: The `social_id` is stored separately for each provider (e.g., `google_id` or `facebook_id`).
+
+- **Use Case**: Social login is useful for users who prefer to log in using their Google or Facebook accounts instead of creating a new password for the application.
+
 ### Cart
 
 #### `POST /cart/add.php`
