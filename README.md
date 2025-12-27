@@ -6,6 +6,9 @@ This document provides detailed information about the endpoints available in the
 1. [Authentication](#authentication)
    - [Register](#register)
    - [Login](#login)
+   - [Logout](#logout)
+   - [Social Login](#social-login)
+   - [Verify Email](#verify-email)
 2. [Products](#products)
    - [Add Product](#add-product)
    - [Update Product](#update-product)
@@ -20,6 +23,13 @@ This document provides detailed information about the endpoints available in the
    - [Add to Cart](#add-to-cart)
    - [List Cart Items](#list-cart-items)
    - [Remove from Cart](#remove-from-cart)
+5. [Conventions & Policies](#conventions--policies)
+   - [Authorization Rules](#authorization-rules)
+   - [Input Formats & Content Types](#input-formats--content-types)
+   - [Image Upload & Dedup Policy](#image-upload--dedup-policy)
+   - [Cart Behavior](#cart-behavior)
+   - [Error Handling & Response Shape](#error-handling--response-shape)
+   - [Security Notes](#security-notes)
 
 ---
 
@@ -80,18 +90,17 @@ This document provides detailed information about the endpoints available in the
 ```
 
 ### Logout
-**Endpoint**: `POST /auth/logout.php`
-
-**Description**: Logs out the current user by invalidating their token in the database.
-
-**Request Body**:
+- Endpoint: `POST /auth/logout.php`
+- Purpose: Invalidate and clear the current token on server.
+- Auth: Requires valid `token` in request body.
+- Content-Type: `application/json`
+- Request Body:
 ```json
 {
   "token": "<user_token>"
 }
 ```
-
-**Response**:
+- Success Response:
 ```json
 {
   "status": true,
@@ -99,6 +108,87 @@ This document provides detailed information about the endpoints available in the
   "data": null
 }
 ```
+- Errors:
+  - `401` with `{"status": false, "message": "Invalid or missing token"}` when token absent/invalid.
+
+### Social Login
+- Endpoint: `POST /auth/social_login.php`
+- Purpose: Login/Register via social provider and issue a token.
+- Auth: Public (no token required).
+- Content-Type: `application/json`
+- Request Body:
+```json
+{
+  "email": "john.doe@example.com",
+  "name": "John Doe",
+  "provider": "google",
+  "social_id": "1234567890"
+}
+```
+- Behavior:
+  - If user exists by `email`, updates provider ID (`google_id`/`facebook_id`) if provided and returns a fresh token.
+  - If user doesn't exist, creates a new user with the given `name` and `email`, stores provider ID, sets `is_verified=1`, and returns a token.
+- Success Responses:
+  - Existing user:
+```json
+{
+  "status": true,
+  "message": "User already exists",
+  "data": {
+    "id": 1,
+    "name": "John Doe",
+    "email": "john.doe@example.com",
+    "token": "<generated_token>"
+  }
+}
+```
+  - New user:
+```json
+{
+  "status": true,
+  "message": "User registered successfully",
+  "data": {
+    "id": 7,
+    "name": "John Doe",
+    "email": "john.doe@example.com",
+    "token": "<generated_token>"
+  }
+}
+```
+- Errors:
+  - Missing fields: `{"status": false, "message": "Missing required fields"}`
+
+### Verify Email
+- Endpoint: `POST /auth/verify_email.php`
+- Purpose: Verify a user's email using a verification code and issue a token.
+- Auth: Public (no token required).
+- Content-Type: `application/json`
+- Request Body:
+```json
+{
+  "email": "john.doe@example.com",
+  "verification_code": 123456
+}
+```
+- Behavior:
+  - Validates the verification code for the given email.
+  - On success, sets `is_verified=1` for the user and issues a token.
+- Success Response:
+```json
+{
+  "status": true,
+  "message": "Email verified successfully.",
+  "data": {
+    "id": 1,
+    "name": "John Doe",
+    "email": "john.doe@example.com",
+    "role": "user",
+    "token": "<generated_token>"
+  }
+}
+```
+- Errors:
+  - Invalid code/email: `{"status": false, "message": "Invalid verification code or email"}`
 
 ---
 
