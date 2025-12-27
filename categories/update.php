@@ -3,7 +3,8 @@ include "../config.php";
 
 $data = json_decode(file_get_contents("php://input"), true);
 
-checkAdmin($conn, $data['user_id']);
+$user = validateToken($conn, $data['token']);
+checkAdmin($conn, $user['id']);
 
 if (empty($data['name'])) {
     echo json_encode([

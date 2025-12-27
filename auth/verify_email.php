@@ -19,8 +19,9 @@ if (!$user) {
     exit;
 }
 
-$stmt = $conn->prepare("UPDATE users SET is_verified=1 WHERE email=?");
-$stmt->execute([$email]);
+$token = bin2hex(random_bytes(16));
+$stmt = $conn->prepare("UPDATE users SET is_verified=1, token=? WHERE email=?");
+$stmt->execute([$token, $email]);
 
 echo json_encode([
     "status" => true,
@@ -29,6 +30,7 @@ echo json_encode([
         "id" => $user['id'],
         "name" => $user['name'],
         "email" => $user['email'],
-        "role" => $user['role']
+        "role" => $user['role'],
+        "token" => $token
     ]
 ]);

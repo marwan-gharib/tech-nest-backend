@@ -1,442 +1,347 @@
-# E-Commerce Backend API
+# E-Commerce Backend API Documentation
 
-This is the backend for an e-commerce application. It provides various endpoints for managing users, products, categories, orders, and carts. The backend is built using PHP and uses a MySQL database.
+This document provides detailed information about the endpoints available in the E-Commerce Backend API, including their usage, request formats, and responses.
 
 ## Table of Contents
-- [Setup](#setup)
-- [Endpoints](#endpoints)
-  - [Authentication](#authentication)
-  - [Cart](#cart)
-  - [Categories](#categories)
-  - [Orders](#orders)
-  - [Products](#products)
-- [Error Handling](#error-handling)
-- [Token-Based Authentication](#token-based-authentication)
+1. [Authentication](#authentication)
+   - [Register](#register)
+   - [Login](#login)
+2. [Products](#products)
+   - [Add Product](#add-product)
+   - [Update Product](#update-product)
+   - [Delete Product](#delete-product)
+   - [List Products](#list-products)
+3. [Categories](#categories)
+   - [Add Category](#add-category)
+   - [Update Category](#update-category)
+   - [Delete Category](#delete-category)
+   - [List Categories](#list-categories)
+4. [Cart](#cart)
+   - [Add to Cart](#add-to-cart)
+   - [List Cart Items](#list-cart-items)
+   - [Remove from Cart](#remove-from-cart)
 
-## Setup
-1. Clone the repository.
-2. Import the `ecommerce_db` SQL schema into your MySQL database.
-3. Update the database credentials in `config.php`.
-4. Start a local PHP server or deploy to a web server.
+---
 
-## Endpoints
+## Authentication
 
-### Authentication
+### Register
+**Endpoint**: `POST /auth/register.php`
 
-#### `POST /auth/login.php`
-- **Description**: Logs in a user.
-- **Request Body**:
-  ```json
-  {
-    "email": "user@example.com",
-    "password": "password123"
-  }
-  ```
-- **Response**:
-  - **Success**:
-    ```json
-    {
-      "status": true,
-      "message": "Login successful",
-      "data": {
-        "id": 1,
-        "name": "John Doe",
-        "email": "user@example.com",
-        "role": "user",
-        "token": "<generated_token>"
-      }
-    }
-    ```
-  - **Failure**:
-    ```json
-    {
-      "status": false,
-      "message": "Invalid email or password",
-      "data": null
-    }
-    ```
+**Description**: Registers a new user, sends a verification code to their email, and returns a token.
 
-#### `POST /auth/register.php`
-- **Description**: Registers a new user and sends a verification code to their email.
-- **Request Body**:
-  ```json
-  {
+**Request Body**:
+```json
+{
+  "name": "John Doe",
+  "email": "john.doe@example.com",
+  "password": "password123"
+}
+```
+
+**Response**:
+```json
+{
+  "status": true,
+  "message": "Registration successful. Verification code sent to email.",
+  "data": {
     "name": "John Doe",
-    "email": "user@example.com",
-    "password": "password123"
+    "email": "john.doe@example.com",
+    "token": "<generated_token>"
   }
-  ```
-- **Response**:
-  - **Success**:
-    ```json
-    {
-      "status": true,
-      "message": "Registration successful",
-      "data": null
-    }
-    ```
-  - **Failure**:
-    ```json
-    {
-      "status": false,
-      "message": "Failed to register user",
-      "error": "Error details"
-    }
-    ```
+}
+```
 
-### Social Login
+### Login
+**Endpoint**: `POST /auth/login.php`
 
-#### `POST /auth/social_login.php`
-- **Description**: Authenticates a user using social login (Google or Facebook). If the user does not exist, they are registered automatically.
-- **Request Body**:
-  ```json
-  {
-    "email": "user@example.com",
+**Description**: Logs in a user and returns a token.
+
+**Request Body**:
+```json
+{
+  "email": "john.doe@example.com",
+  "password": "password123"
+}
+```
+
+**Response**:
+```json
+{
+  "status": true,
+  "message": "Login successful",
+  "data": {
+    "id": 1,
     "name": "John Doe",
-    "provider": "google",
-    "social_id": "1234567890"
+    "email": "john.doe@example.com",
+    "role": "user",
+    "token": "<generated_token>"
   }
-  ```
-  - `email`: The email address of the user.
-  - `name`: The name of the user.
-  - `provider`: The social login provider (e.g., `google` or `facebook`).
-  - `social_id`: The unique identifier provided by the social login provider.
+}
+```
 
-- **Response**:
-  - **Success** (User already exists):
-    ```json
+---
+
+## Products
+
+### Add Product
+**Endpoint**: `POST /products/add.php`
+
+**Description**: Adds a new product. Requires admin privileges and a valid token.
+
+**Request Body**:
+```json
+{
+  "token": "<admin_token>",
+  "name": "Product Name",
+  "description": "Product Description",
+  "price": 100.0,
+  "stock": 50,
+  "category_id": 1,
+  "img": "<base64_encoded_image>"
+}
+```
+
+**Response**:
+```json
+{
+  "status": true,
+  "message": "Product added successfully",
+  "data": null
+}
+```
+
+### Update Product
+**Endpoint**: `POST /products/update.php`
+
+**Description**: Updates an existing product. Requires admin privileges and a valid token.
+
+**Request Body**:
+```json
+{
+  "token": "<admin_token>",
+  "id": 1,
+  "name": "Updated Product Name",
+  "description": "Updated Description",
+  "price": 120.0,
+  "stock": 40,
+  "img": "<base64_encoded_image>"
+}
+```
+
+**Response**:
+```json
+{
+  "status": true,
+  "message": "Product updated successfully",
+  "data": null
+}
+```
+
+### Delete Product
+**Endpoint**: `POST /products/delete.php`
+
+**Description**: Deletes a product. Requires admin privileges and a valid token.
+
+**Request Body**:
+```json
+{
+  "token": "<admin_token>",
+  "id": 1
+}
+```
+
+**Response**:
+```json
+{
+  "status": true,
+  "message": "Product deleted successfully",
+  "data": null
+}
+```
+
+### List Products
+**Endpoint**: `GET /products/list.php`
+
+**Description**: Retrieves a list of all products.
+
+**Response**:
+```json
+{
+  "status": true,
+  "message": "Products retrieved successfully",
+  "data": [
     {
-      "status": true,
-      "message": "User already exists",
-      "data": {
-        "id": 1,
-        "name": "John Doe",
-        "email": "user@example.com",
-        "role": "user"
-      }
-    }
-    ```
-  - **Success** (New user registered):
-    ```json
-    {
-      "status": true,
-      "message": "User registered successfully",
-      "data": {
-        "id": 2,
-        "name": "John Doe",
-        "email": "user@example.com"
-      }
-    }
-    ```
-  - **Failure**:
-    ```json
-    {
-      "status": false,
-      "message": "Invalid data"
-    }
-    ```
-
-- **Differences from Regular Login**:
-  1. **No Password Required**: Social login does not require a password. Instead, it relies on the `social_id` provided by the social login provider.
-  2. **Automatic Registration**: If the user does not exist, they are automatically registered with the provided `name`, `email`, and `social_id`.
-  3. **Provider-Specific IDs**: The `social_id` is stored separately for each provider (e.g., `google_id` or `facebook_id`).
-
-- **Use Case**: Social login is useful for users who prefer to log in using their Google or Facebook accounts instead of creating a new password for the application.
-
-### Cart
-
-#### `POST /cart/add.php`
-- **Description**: Adds an item to the cart.
-- **Request Body**:
-  ```json
-  {
-    "user_id": 1,
-    "product_id": 101,
-    "quantity": 2
-  }
-  ```
-- **Response**:
-  - **Success**:
-    ```json
-    {
-      "status": true,
-      "message": "Item added to cart successfully",
-      "data": null
-    }
-    ```
-  - **Failure**:
-    ```json
-    {
-      "status": false,
-      "message": "Failed to add item to cart",
-      "error": "Error details"
-    }
-    ```
-
-#### `GET /cart/list.php?user_id=1`
-- **Description**: Retrieves all items in the user's cart.
-- **Response**:
-  - **Success**:
-    ```json
-    {
-      "status": true,
-      "message": "Cart items retrieved successfully",
-      "data": [
-        {
-          "id": 1,
-          "user_id": 1,
-          "product_id": 101,
-          "quantity": 2
-        }
-      ]
-    }
-    ```
-  - **Failure**:
-    ```json
-    {
-      "status": false,
-      "message": "Failed to retrieve cart items",
-      "error": "Error details"
-    }
-    ```
-
-#### `POST /cart/remove.php`
-- **Description**: Removes an item from the cart.
-- **Request Body**:
-  ```json
-  {
-    "cart_id": 1,
-    "user_id": 1
-  }
-  ```
-- **Response**:
-  ```json
-  {
-    "status": true,
-    "message": "Item removed from cart successfully",
-    "data": null
-  }
-  ```
-
-### Categories
-
-#### `POST /categories/add.php`
-- **Description**: Adds a new category (Admin only).
-- **Request Body**:
-  ```json
-  {
-    "user_id": 1,
-    "name": "Electronics"
-  }
-  ```
-- **Response**:
-  ```json
-  {
-    "status": true,
-    "message": "Category added successfully",
-    "data": null
-  }
-  ```
-
-#### `GET /categories/list.php`
-- **Description**: Retrieves all categories.
-- **Response**:
-  ```json
-  {
-    "status": true,
-    "message": "Categories retrieved successfully",
-    "data": [
-      {
-        "id": 1,
-        "name": "Electronics"
-      }
-    ]
-  }
-  ```
-
-### Products
-
-#### `POST /products/add.php`
-- **Description**: Adds a new product (Admin only).
-- **Request Body**:
-  ```json
-  {
-    "user_id": 1,
-    "name": "Laptop",
-    "description": "A high-end laptop",
-    "price": 1500,
-    "stock": 10,
-    "category_id": 1,
-    "img": "<base64_encoded_image>"
-  }
-  ```
-  - `img`: Base64-encoded image string. If provided, the image will be saved and its URL stored in the database.
-
-- **Response**:
-  - **Success**:
-    ```json
-    {
-      "status": true,
-      "message": "Product added successfully",
-      "data": null
-    }
-    ```
-  - **Failure**:
-    ```json
-    {
-      "status": false,
-      "message": "Failed to add product",
-      "error": "Error details"
-    }
-    ```
-
-#### `GET /products/list.php`
-- **Description**: Retrieves all products.
-- **Response**:
-  ```json
-  {
-    "status": true,
-    "message": "Products retrieved successfully",
-    "data": [
-      {
-        "id": 1,
-        "name": "Laptop",
-        "description": "A high-end laptop",
-        "price": 1500,
-        "stock": 12,
-        "category_id": 1,
-        "image_url": "http://example.com/laptop.jpg"
-      }
-    ]
-  }
-  ```
-
-### Email Verification
-
-#### `POST /auth/register.php`
-- **Description**: Registers a new user and sends a verification code to their email.
-- **Notes**: The user is saved as unverified until they verify their email.
-
-#### `POST /auth/verify_email.php`
-- **Description**: Verifies the user's email using the verification code.
-- **Request Body**:
-  ```json
-  {
-    "email": "user@example.com",
-    "verification_code": 123456
-  }
-  ```
-- **Response**:
-  - **Success**:
-    ```json
-    {
-      "status": true,
-      "message": "Email verified successfully.",
-      "data": {
-        "id": 1,
-        "name": "John Doe",
-        "email": "user@example.com",
-        "role": "user"
-      }
-    }
-    ```
-  - **Failure**:
-    ```json
-    {
-      "status": false,
-      "message": "Invalid verification code or email.",
-      "data": null
-    }
-    ```
-
-## Error Handling
-- All endpoints return a `status` field indicating success (`true`) or failure (`false`).
-- In case of errors, a `message` field provides details about the error.
-- Example error response:
-  ```json
-  {
-    "status": false,
-    "message": "Access denied (Admin only)",
-    "data": null
-  }
-  ```
-
-### Index Endpoint
-
-#### `GET /index.php`
-- **Description**: Entry point for the API.
-- **Response**:
-  ```json
-  {
-    "status": true,
-    "message": "Welcome to the E-commerce Backend API",
-    "endpoints": {
-      "auth/login.php": "Login endpoint",
-      "auth/register.php": "Register endpoint",
-      "cart/add.php": "Add to cart",
-      "cart/list.php": "List cart items",
-      "cart/remove.php": "Remove from cart",
-      "categories/add.php": "Add category",
-      "categories/list.php": "List categories",
-      "categories/delete.php": "Delete category",
-      "orders/create.php": "Create order",
-      "orders/list.php": "List orders",
-      "products/add.php": "Add product",
-      "products/list.php": "List products",
-      "products/delete.php": "Delete product"
-    }
-  }
-  ```
-
-### Updates
-
-- **Validation**: Added input validation for various endpoints to ensure data integrity.
-- **Security**: Updated `config.php` to use environment variables for database credentials.
-- **Endpoints Updated**:
-  - `auth/register.php`: Validates `name` and `password` fields.
-  - `auth/login.php`: Validates email format.
-  - `auth/social_login.php`: Validates `name` and `provider` fields.
-  - `categories/update.php`: Validates `name` field.
-  - `products/update.php`: Validates `name`, `description`, and `price` fields.
-  - `cart/add.php`: Validates `quantity` field.
-
-### Token-Based Authentication
-
-#### Overview
-- Tokens are used to authenticate users for protected endpoints.
-- A token is generated upon successful login and must be included in the request headers or body for subsequent requests.
-
-#### Token Generation
-- **Endpoint**: `POST /auth/login.php`
-- **Response**:
-  ```json
-  {
-    "status": true,
-    "message": "Login successful",
-    "data": {
       "id": 1,
-      "name": "John Doe",
-      "email": "user@example.com",
-      "role": "user",
-      "token": "<generated_token>"
+      "name": "Product Name",
+      "description": "Product Description",
+      "price": 100.0,
+      "stock": 50,
+      "category_id": 1,
+      "image_url": "uploads/product_image.png"
     }
-  }
-  ```
+  ]
+}
+```
 
-#### Token Validation
-- Tokens are validated for all protected endpoints using the `validateToken` function.
-- If the token is invalid or missing, the request is denied.
+---
 
-#### Example Usage
-- Include the token in the request body or headers:
-  ```json
-  {
-    "token": "<user_token>",
-    "other_field": "value"
-  }
-  ```
+## Categories
 
-#### Protected Endpoints
-- `POST /products/add.php`
-- `POST /products/update.php`
-- `POST /products/delete.php`
+### Add Category
+**Endpoint**: `POST /categories/add.php`
+
+**Description**: Adds a new category. Requires admin privileges and a valid token.
+
+**Request Body**:
+```json
+{
+  "token": "<admin_token>",
+  "name": "Category Name"
+}
+```
+
+**Response**:
+```json
+{
+  "status": true,
+  "message": "Category added successfully",
+  "data": null
+}
+```
+
+### Update Category
+**Endpoint**: `POST /categories/update.php`
+
+**Description**: Updates an existing category. Requires admin privileges and a valid token.
+
+**Request Body**:
+```json
+{
+  "token": "<admin_token>",
+  "id": 1,
+  "name": "Updated Category Name"
+}
+```
+
+**Response**:
+```json
+{
+  "status": true,
+  "message": "Category updated successfully",
+  "data": null
+}
+```
+
+### Delete Category
+**Endpoint**: `POST /categories/delete.php`
+
+**Description**: Deletes a category. Requires admin privileges and a valid token.
+
+**Request Body**:
+```json
+{
+  "token": "<admin_token>",
+  "id": 1
+}
+```
+
+**Response**:
+```json
+{
+  "status": true,
+  "message": "Category deleted successfully",
+  "data": null
+}
+```
+
+### List Categories
+**Endpoint**: `GET /categories/list.php`
+
+**Description**: Retrieves a list of all categories.
+
+**Response**:
+```json
+{
+  "status": true,
+  "message": "Categories retrieved successfully",
+  "data": [
+    {
+      "id": 1,
+      "name": "Category Name"
+    }
+  ]
+}
+```
+
+---
+
+## Cart
+
+### Add to Cart
+**Endpoint**: `POST /cart/add.php`
+
+**Description**: Adds an item to the user's cart. Requires a valid token.
+
+**Request Body**:
+```json
+{
+  "token": "<user_token>",
+  "product_id": 1,
+  "quantity": 2
+}
+```
+
+**Response**:
+```json
+{
+  "status": true,
+  "message": "Item added to cart successfully",
+  "data": null
+}
+```
+
+### List Cart Items
+**Endpoint**: `GET /cart/list.php`
+
+**Description**: Retrieves the items in the user's cart. Requires a valid token.
+
+**Request Parameters**:
+- `token`: `<user_token>`
+
+**Response**:
+```json
+{
+  "status": true,
+  "message": "Cart items retrieved successfully",
+  "data": [
+    {
+      "id": 1,
+      "product_id": 1,
+      "quantity": 2
+    }
+  ]
+}
+```
+
+### Remove from Cart
+**Endpoint**: `POST /cart/remove.php`
+
+**Description**: Removes an item from the user's cart. Requires a valid token.
+
+**Request Body**:
+```json
+{
+  "token": "<user_token>",
+  "cart_id": 1
+}
+```
+
+**Response**:
+```json
+{
+  "status": true,
+  "message": "Item removed from cart successfully",
+  "data": null
+}
+```

@@ -33,16 +33,15 @@ if ($stmt->fetch(PDO::FETCH_ASSOC)) {
 }
 
 $verification_code = rand(100000, 999999);
-
 $stmt = $conn->prepare(
     "INSERT INTO users (`name`, email, `password`, `role`, `verification_code`, `is_verified`)
-     VALUES (?, ?, ?, 'user', ?, 0)"
+     VALUES (?, ?, ?, ?, ?, 0)"
 );
-
 $stmt->execute([
     $data['name'],
     $data['email'],
-    password_hash($data['password'], PASSWORD_DEFAULT),
+    password_hash($data['password'], PASSWORD_BCRYPT),
+    'user',
     $verification_code
 ]);
 
@@ -50,6 +49,9 @@ mail($data['email'], "Your Verification Code", "Your verification code is: $veri
 
 echo json_encode([
     "status" => true,
-    "message" => "Registration successful. Please verify your email.",
-    "data" => null
+    "message" => "Registration successful. Verification code sent to email.",
+    "data" => [
+        "name" => $data['name'],
+        "email" => $data['email']
+    ]
 ]);

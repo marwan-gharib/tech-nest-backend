@@ -12,6 +12,8 @@ if (!is_numeric($data['quantity']) || $data['quantity'] <= 0) {
     exit;
 }
 
+$user = validateToken($conn, $data['token']);
+
 $stmt = $conn->prepare(
     "INSERT INTO cart (user_id,product_id,quantity)
      VALUES (?,?,?)"

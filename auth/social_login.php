@@ -22,6 +22,8 @@ if (empty($name) || empty($provider)) {
     exit;
 }
 
+$token = bin2hex(random_bytes(16));
+
 // Check if the user already exists in the database
 $stmt = $conn->prepare("SELECT * FROM users WHERE email=?");
 $stmt->execute([$email]);
@@ -41,18 +43,26 @@ if ($user) {
              ->execute([$social_id,$user['id']]);
     }
 
+    $stmt = $conn->prepare("UPDATE users SET token=? WHERE id=?");
+    $stmt->execute([$token, $user['id']]);
+
     echo json_encode([
         "status" => true,
         "message" => "User already exists",
-        "data" => $user
+        "data" => [
+            "id" => $user['id'],
+            "name" => $user['name'],
+            "email" => $user['email'],
+            "token" => $token
+        ]
     ]);
     exit;
 }
 
 // Register a new user if they do not exist
 $stmt = $conn->prepare(
-    "INSERT INTO users (`name`,email,`role`,google_id,facebook_id)
-     VALUES (?,?,?,?,?)"
+    "INSERT INTO users (`name`,email,`role`,google_id,facebook_id,token)
+     VALUES (?,?,?,?,?,?)"
 );
 
 $stmt->execute([
@@ -60,7 +70,8 @@ $stmt->execute([
     $email,
     "user",
     $provider == "google" ? $social_id : null,
-    $provider == "facebook" ? $social_id : null
+    $provider == "facebook" ? $social_id : null,
+    $token
 ]);
 
 $user_id = $conn->lastInsertId();
@@ -71,6 +82,7 @@ echo json_encode([
     "data" => [
         "id" => $user_id,
         "name" => $name,
-        "email" => $email
+        "email" => $email,
+        "token" => $token
     ]
 ]);

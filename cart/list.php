@@ -2,6 +2,7 @@
 include "../config.php";
 
 $user_id = $_GET['user_id'];
+$user = validateToken($conn, $_GET['token']);
 
 $stmt = $conn->prepare("SELECT * FROM cart WHERE user_id=?");
 try {
