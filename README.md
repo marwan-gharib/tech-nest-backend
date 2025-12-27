@@ -334,3 +334,15 @@ This is the backend for an e-commerce application. It provides various endpoints
     }
   }
   ```
+
+### Updates
+
+- **Validation**: Added input validation for various endpoints to ensure data integrity.
+- **Security**: Updated `config.php` to use environment variables for database credentials.
+- **Endpoints Updated**:
+  - `auth/register.php`: Validates `name` and `password` fields.
+  - `auth/login.php`: Validates email format.
+  - `auth/social_login.php`: Validates `name` and `provider` fields.
+  - `categories/update.php`: Validates `name` field.
+  - `products/update.php`: Validates `name`, `description`, and `price` fields.
+  - `cart/add.php`: Validates `quantity` field.

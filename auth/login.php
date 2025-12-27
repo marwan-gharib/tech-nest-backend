@@ -3,6 +3,15 @@ include "../config.php";
 
 $data = json_decode(file_get_contents("php://input"), true);
 
+if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+    echo json_encode([
+        "status" => false,
+        "message" => "Invalid email format",
+        "data" => null
+    ]);
+    exit;
+}
+
 $stmt = $conn->prepare("SELECT * FROM users WHERE email=?");
 $stmt->execute([$data['email']]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);

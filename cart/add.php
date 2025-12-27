@@ -3,6 +3,15 @@ include "../config.php";
 
 $data = json_decode(file_get_contents("php://input"), true);
 
+if (!is_numeric($data['quantity']) || $data['quantity'] <= 0) {
+    echo json_encode([
+        "status" => false,
+        "message" => "Quantity must be a positive number",
+        "data" => null
+    ]);
+    exit;
+}
+
 $stmt = $conn->prepare(
     "INSERT INTO cart (user_id,product_id,quantity)
      VALUES (?,?,?)"

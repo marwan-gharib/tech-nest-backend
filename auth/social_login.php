@@ -13,6 +13,15 @@ if (!$email || !$provider || !$social_id) {
     exit;
 }
 
+if (empty($name) || empty($provider)) {
+    echo json_encode([
+        "status" => false,
+        "message" => "Name and provider are required",
+        "data" => null
+    ]);
+    exit;
+}
+
 // Check if the user already exists in the database
 $stmt = $conn->prepare("SELECT * FROM users WHERE email=?");
 $stmt->execute([$email]);

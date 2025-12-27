@@ -3,10 +3,15 @@
 header("Content-Type: application/json");
 
 // Create a new PDO connection to the MySQL database
+$db_host = getenv('DB_HOST') ?: 'localhost';
+$db_name = getenv('DB_NAME') ?: 'ecommerce_db';
+$db_user = getenv('DB_USER') ?: 'root';
+$db_pass = getenv('DB_PASS') ?: '';
+
 $conn = new PDO(
-    "mysql:host=localhost;dbname=ecommerce_db",
-    "root",
-    ""
+    "mysql:host=$db_host;dbname=$db_name",
+    $db_user,
+    $db_pass
 );
 
 // Set PDO to throw exceptions on errors
