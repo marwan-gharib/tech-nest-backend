@@ -17,14 +17,15 @@ if (empty($data['name']) || empty($data['description']) || !is_numeric($data['pr
 try {
     $stmt = $conn->prepare(
         "UPDATE products
-         SET name=?, description=?, price=?
+         SET `name`=?, `description`=?, price=?, stock=?
          WHERE id=?"
     );
     $stmt->execute([
         $data['name'],
         $data['description'],
         $data['price'],
-        $data['product_id']
+        $data['stock'],
+        $data['id']
     ]);
 
     echo json_encode([

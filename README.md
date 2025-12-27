@@ -263,6 +263,7 @@ This is the backend for an e-commerce application. It provides various endpoints
     "name": "Laptop",
     "description": "A high-end laptop",
     "price": 1500,
+    "stock": 12,
     "category_id": 1,
     "image_url": "http://example.com/laptop.jpg"
   }
@@ -289,6 +290,7 @@ This is the backend for an e-commerce application. It provides various endpoints
         "name": "Laptop",
         "description": "A high-end laptop",
         "price": 1500,
+        "stock": 12,
         "category_id": 1,
         "image_url": "http://example.com/laptop.jpg"
       }

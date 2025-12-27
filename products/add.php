@@ -6,7 +6,7 @@ $data = json_decode(file_get_contents("php://input"), true);
 checkAdmin($conn, $data['user_id']);
 
 $stmt = $conn->prepare(
-    "INSERT INTO products (`name`,`description`,price,category_id,image_url)
+    "INSERT INTO products (`name`,`description`,price,stock,category_id,image_url)
      VALUES (?,?,?,?,?)"
 );
 
@@ -15,6 +15,7 @@ try {
         $data['name'],
         $data['description'],
         $data['price'],
+        $data['stock'],
         $data['category_id'],
         $data['image_url']
     ]);

@@ -7,7 +7,7 @@ checkAdmin($conn, $data['user_id']);
 
 $stmt = $conn->prepare("DELETE FROM products WHERE id=?");
 try {
-    $stmt->execute([$data['product_id']]);
+    $stmt->execute([$data['id']]);
 
     echo json_encode([
         "status" => true,
