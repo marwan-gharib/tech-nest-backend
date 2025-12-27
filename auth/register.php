@@ -4,7 +4,7 @@ include "../config.php";
 $data = json_decode(file_get_contents("php://input"), true);
 
 $stmt = $conn->prepare(
-    "INSERT INTO users (name,email,password,role)
+    "INSERT INTO users (`name`,email,`password`,`role`)
      VALUES (?,?,?, 'user')"
 );
 

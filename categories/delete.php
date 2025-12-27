@@ -6,10 +6,18 @@ $data = json_decode(file_get_contents("php://input"), true);
 checkAdmin($conn, $data['user_id']);
 
 $stmt = $conn->prepare("DELETE FROM categories WHERE id=?");
-$stmt->execute([$data['category_id']]);
+try {
+    $stmt->execute([$data['category_id']]);
 
-echo json_encode([
-    "status" => true,
-    "message" => "Category deleted successfully",
-    "data" => null
-]);
+    echo json_encode([
+        "status" => true,
+        "message" => "Category deleted successfully",
+        "data" => null
+    ]);
+} catch (Exception $e) {
+    echo json_encode([
+        "status" => false,
+        "message" => "Failed to delete category",
+        "error" => $e->getMessage()
+    ]);
+}

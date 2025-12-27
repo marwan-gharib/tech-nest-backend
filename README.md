@@ -32,18 +32,27 @@ This is the backend for an e-commerce application. It provides various endpoints
   }
   ```
 - **Response**:
-  ```json
-  {
-    "status": true,
-    "message": "Login successful",
-    "data": {
-      "id": 1,
-      "name": "John Doe",
-      "email": "user@example.com",
-      "role": "user"
+  - **Success**:
+    ```json
+    {
+      "status": true,
+      "message": "Login successful",
+      "data": {
+        "id": 1,
+        "name": "John Doe",
+        "email": "user@example.com",
+        "role": "user"
+      }
     }
-  }
-  ```
+    ```
+  - **Failure**:
+    ```json
+    {
+      "status": false,
+      "message": "Invalid email or password",
+      "data": null
+    }
+    ```
 
 #### `POST /auth/register.php`
 - **Description**: Registers a new user.
@@ -56,13 +65,22 @@ This is the backend for an e-commerce application. It provides various endpoints
   }
   ```
 - **Response**:
-  ```json
-  {
-    "status": true,
-    "message": "Registration successful",
-    "data": null
-  }
-  ```
+  - **Success**:
+    ```json
+    {
+      "status": true,
+      "message": "Registration successful",
+      "data": null
+    }
+    ```
+  - **Failure**:
+    ```json
+    {
+      "status": false,
+      "message": "Failed to register user",
+      "error": "Error details"
+    }
+    ```
 
 ### Cart
 
@@ -77,31 +95,49 @@ This is the backend for an e-commerce application. It provides various endpoints
   }
   ```
 - **Response**:
-  ```json
-  {
-    "status": true,
-    "message": "Item added to cart successfully",
-    "data": null
-  }
-  ```
+  - **Success**:
+    ```json
+    {
+      "status": true,
+      "message": "Item added to cart successfully",
+      "data": null
+    }
+    ```
+  - **Failure**:
+    ```json
+    {
+      "status": false,
+      "message": "Failed to add item to cart",
+      "error": "Error details"
+    }
+    ```
 
 #### `GET /cart/list.php?user_id=1`
 - **Description**: Retrieves all items in the user's cart.
 - **Response**:
-  ```json
-  {
-    "status": true,
-    "message": "Cart items retrieved successfully",
-    "data": [
-      {
-        "id": 1,
-        "user_id": 1,
-        "product_id": 101,
-        "quantity": 2
-      }
-    ]
-  }
-  ```
+  - **Success**:
+    ```json
+    {
+      "status": true,
+      "message": "Cart items retrieved successfully",
+      "data": [
+        {
+          "id": 1,
+          "user_id": 1,
+          "product_id": 101,
+          "quantity": 2
+        }
+      ]
+    }
+    ```
+  - **Failure**:
+    ```json
+    {
+      "status": false,
+      "message": "Failed to retrieve cart items",
+      "error": "Error details"
+    }
+    ```
 
 #### `POST /cart/remove.php`
 - **Description**: Removes an item from the cart.
@@ -247,5 +283,32 @@ This is the backend for an e-commerce application. It provides various endpoints
     "status": false,
     "message": "Access denied (Admin only)",
     "data": null
+  }
+  ```
+
+### Index Endpoint
+
+#### `GET /index.php`
+- **Description**: Entry point for the API.
+- **Response**:
+  ```json
+  {
+    "status": true,
+    "message": "Welcome to the E-commerce Backend API",
+    "endpoints": {
+      "auth/login.php": "Login endpoint",
+      "auth/register.php": "Register endpoint",
+      "cart/add.php": "Add to cart",
+      "cart/list.php": "List cart items",
+      "cart/remove.php": "Remove from cart",
+      "categories/add.php": "Add category",
+      "categories/list.php": "List categories",
+      "categories/delete.php": "Delete category",
+      "orders/create.php": "Create order",
+      "orders/list.php": "List orders",
+      "products/add.php": "Add product",
+      "products/list.php": "List products",
+      "products/delete.php": "Delete product"
+    }
   }
   ```

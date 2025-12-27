@@ -8,14 +8,22 @@ $stmt = $conn->prepare(
      VALUES (?,?,?)"
 );
 
-$stmt->execute([
-    $data['user_id'],
-    $data['product_id'],
-    $data['quantity']
-]);
+try {
+    $stmt->execute([
+        $data['user_id'],
+        $data['product_id'],
+        $data['quantity']
+    ]);
 
-echo json_encode([
-    "status" => true,
-    "message" => "Item added to cart successfully",
-    "data" => null
-]);
+    echo json_encode([
+        "status" => true,
+        "message" => "Item added to cart successfully",
+        "data" => null
+    ]);
+} catch (Exception $e) {
+    echo json_encode([
+        "status" => false,
+        "message" => "Failed to add item to cart",
+        "error" => $e->getMessage()
+    ]);
+}
