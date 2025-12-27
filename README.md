@@ -87,7 +87,7 @@ This document provides detailed information about the endpoints available in the
 ### Add Product
 **Endpoint**: `POST /products/add.php`
 
-**Description**: Adds a new product. Requires admin privileges and a valid token.
+**Description**: Adds a new product. If a product with the same `name` and `category_id` already exists, the API increases its `stock` by the provided `stock` instead of creating a new record. If an image is provided, the product's image may be updated. Requires admin privileges and a valid token.
 
 **Request Body**:
 ```json
@@ -102,11 +102,20 @@ This document provides detailed information about the endpoints available in the
 }
 ```
 
-**Response**:
+**Response (new product)**:
 ```json
 {
   "status": true,
   "message": "Product added successfully",
+  "data": null
+}
+```
+
+**Response (existing product, stock increased)**:
+```json
+{
+  "status": true,
+  "message": "Product already exists. Stock increased.",
   "data": null
 }
 ```
@@ -191,7 +200,7 @@ This document provides detailed information about the endpoints available in the
 ### Add Category
 **Endpoint**: `POST /categories/add.php`
 
-**Description**: Adds a new category. Requires admin privileges and a valid token.
+**Description**: Adds a new category. The category name must be unique (case-insensitive). If the name already exists, the API returns an error and does not create a new category. Requires admin privileges and a valid token.
 
 **Request Body**:
 ```json
@@ -201,11 +210,20 @@ This document provides detailed information about the endpoints available in the
 }
 ```
 
-**Response**:
+**Response (category created)**:
 ```json
 {
   "status": true,
   "message": "Category added successfully",
+  "data": null
+}
+```
+
+**Response (duplicate name)**:
+```json
+{
+  "status": false,
+  "message": "Category already exists",
   "data": null
 }
 ```

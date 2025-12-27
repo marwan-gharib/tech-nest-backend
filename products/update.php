@@ -1,55 +1,77 @@
 <?php
 include "../config.php";
 
-$data = json_decode(file_get_contents("php://input"), true);
+$user_id = $_POST['user_id'] ?? null;
+$token = $_POST['token'] ?? null;
 
-$user = validateToken($conn, $data['token']);
-checkAdmin($conn, $user['id']);
-
-if (empty($data['name']) || empty($data['description']) || !is_numeric($data['price'])) {
-    echo json_encode([
-        "status" => false,
-        "message" => "Name, description, and valid price are required",
-        "data" => null
-    ]);
+if (!$user_id || !$token) {
+    echo json_encode(["status"=>false,"message"=>"Token required"]);
     exit;
 }
 
-if (!empty($data['img'])) {
-    $image_name = uniqid() . ".png";
+$user = validateToken($conn, $token);
+checkAdmin($conn, $user['id']);
+
+if (
+    empty($_POST['id']) ||
+    empty($_POST['name']) ||
+    empty($_POST['description']) ||
+    !isset($_POST['price']) ||
+    !isset($_POST['stock'])
+) {
+    echo json_encode(["status"=>false,"message"=>"All fields required"]);
+    exit;
+}
+
+$image_path = null;
+
+if (isset($_FILES['image']) && $_FILES['image']['error'] === 0) {
+
+    $upload_dir = "../uploads/";
+
+    if (!is_dir($upload_dir)) mkdir($upload_dir, 0777, true);
+
+    $ext = strtolower(pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION));
+    $allowed = ['jpg','jpeg','png','webp'];
+
+    if (!in_array($ext, $allowed)) {
+        echo json_encode(["status"=>false,"message"=>"Invalid image type"]);
+        exit;
+    }
+
+    $image_name = uniqid() . "." . $ext;
     $image_path = "uploads/" . $image_name;
-    file_put_contents($image_path, base64_decode($data['img']));
-    $data['image_url'] = $image_path;
+
+    if (!move_uploaded_file($_FILES['image']['tmp_name'], "../" . $image_path)) {
+        echo json_encode(["status"=>false,"message"=>"Failed to upload image"]);
+        exit;
+    }
 } else {
     $stmt = $conn->prepare("SELECT image_url FROM products WHERE id=?");
-    $stmt->execute([$data['id']]);
-    $data['image_url'] = $stmt->fetchColumn();
+    $stmt->execute([$_POST['id']]);
+    $image_path = $stmt->fetchColumn();
 }
 
 try {
     $stmt = $conn->prepare(
         "UPDATE products
-         SET `name`=?, `description`=?, price=?, stock=?, image_url=?
+         SET name=?, description=?, price=?, stock=?, image_url=?
          WHERE id=?"
     );
     $stmt->execute([
-        $data['name'],
-        $data['description'],
-        $data['price'],
-        $data['stock'],
-        $data['image_url'],
-        $data['id']
+        $_POST['name'],
+        $_POST['description'],
+        $_POST['price'],
+        $_POST['stock'],
+        $image_path,
+        $_POST['id']
     ]);
 
-    echo json_encode([
-        "status" => true,
-        "message" => "Product updated successfully",
-        "data" => null
-    ]);
+    echo json_encode(["status"=>true,"message"=>"Product updated successfully"]);
 } catch (Exception $e) {
     echo json_encode([
-        "status" => false,
-        "message" => "Failed to update product",
-        "error" => $e->getMessage()
+        "status"=>false,
+        "message"=>"Failed to update product",
+        "error"=>$e->getMessage()
     ]);
 }
