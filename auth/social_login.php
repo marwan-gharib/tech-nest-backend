@@ -22,7 +22,7 @@ if (empty($name) || empty($provider)) {
     exit;
 }
 
-$token = bin2hex(random_bytes(16));
+$token = bin2hex(random_bytes(50));
 
 // Check if the user already exists in the database
 $stmt = $conn->prepare("SELECT * FROM users WHERE email=?");
@@ -57,7 +57,7 @@ if ($user) {
 
     echo json_encode([
         "status" => true,
-        "message" => "User already exists",
+        "message" => "User already exists, Login successfully",
         "data" => [
             "id" => $user['id'],
             "name" => $user['name'],

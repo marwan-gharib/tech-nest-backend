@@ -3,10 +3,10 @@
 header("Content-Type: application/json");
 
 // Create a new PDO connection to the MySQL database
-$db_host = getenv('DB_HOST') ?: 'localhost';
-$db_name = getenv('DB_NAME') ?: 'ecommerce_db';
-$db_user = getenv('DB_USER') ?: 'root';
-$db_pass = getenv('DB_PASS') ?: '';
+$db_host = 'localhost';
+$db_name = 'ecommerce_db';
+$db_user = 'root';
+$db_pass = '';
 
 $conn = new PDO(
     "mysql:host=$db_host;dbname=$db_name",
@@ -50,4 +50,32 @@ function validateToken($conn, $token) {
     }
 
     return $user;
+}
+
+
+require_once __DIR__ . "/PHPMailer/Exception.php";
+require_once __DIR__ . "/PHPMailer/PHPMailer.php";
+require_once __DIR__ . "/PHPMailer/SMTP.php";
+
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+function sendVerificationEmail($email, $code) {
+    $mail = new PHPMailer(true);
+
+    $mail->isSMTP();
+    $mail->Host       = 'smtp.gmail.com';
+    $mail->SMTPAuth   = true;
+    $mail->Username   = 'yourgmail@gmail.com';
+    $mail->Password   = 'APP_PASSWORD';
+    $mail->SMTPSecure = 'tls';
+    $mail->Port       = 587;
+
+    $mail->setFrom('yourgmail@gmail.com', 'E-Commerce App');
+    $mail->addAddress($email);
+
+    $mail->Subject = 'Email Verification Code';
+    $mail->Body    = "Your verification code is: $code\nValid for 5 minutes.";
+
+    $mail->send();
 }
