@@ -8,7 +8,7 @@ $stmt = $conn->prepare(
     WHERE email=? 
     AND verification_code=? 
     AND is_verified=0 
-    AND verification_expires_at >= NOW()"
+    AND code_expires_at >= NOW()"
 );
 
 $stmt->execute([$data['email'], $data['verification_code']]);
@@ -23,9 +23,9 @@ if (!$user) {
     exit;
 }
 
-$token = bin2hex(random_bytes(50));
-$stmt = $conn->prepare("UPDATE users SET is_verified=1, verification_code=NULL, verification_expires_at=NULL, token=? WHERE email=?");
-$stmt->execute([$token, $email]);
+$token = bin2hex(random_bytes(25));
+$stmt = $conn->prepare("UPDATE users SET is_verified=1, verification_code=NULL, code_expires_at=NULL, token=? WHERE email=?");
+$stmt->execute([$token, $data['email']]);
 
 echo json_encode([
     "status" => true,

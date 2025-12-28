@@ -26,7 +26,7 @@ if ($user && password_verify($data['password'], $user['password'])) {
         exit;
     }
 
-    $token = bin2hex(random_bytes(50));
+    $token = bin2hex(random_bytes(25));
     $stmt = $conn->prepare("UPDATE users SET token=? WHERE id=?");
     $stmt->execute([$token, $user['id']]);
 

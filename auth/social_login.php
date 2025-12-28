@@ -22,7 +22,7 @@ if (empty($name) || empty($provider)) {
     exit;
 }
 
-$token = bin2hex(random_bytes(50));
+$token = bin2hex(random_bytes(25));
 
 // Check if the user already exists in the database
 $stmt = $conn->prepare("SELECT * FROM users WHERE email=?");
@@ -43,13 +43,13 @@ if ($user) {
     if ($provider == "google" && empty($user['google_id'])) {
         // Update Google ID
         $conn->prepare("UPDATE users SET google_id=? WHERE id=?")
-             ->execute([$social_id,$user['id']]);
+            ->execute([$social_id, $user['id']]);
     }
 
     if ($provider == "facebook" && empty($user['facebook_id'])) {
         // Update Facebook ID
         $conn->prepare("UPDATE users SET facebook_id=? WHERE id=?")
-             ->execute([$social_id,$user['id']]);
+            ->execute([$social_id, $user['id']]);
     }
 
     $stmt = $conn->prepare("UPDATE users SET token=? WHERE id=?");

@@ -36,7 +36,7 @@ $verification_code = rand(100000, 999999);
 
 $stmt = $conn->prepare(
     "INSERT INTO users 
-    (`name`,email,`password`,`role`,verification_code,is_verified,verification_expires_at,token)
+    (`name`,email,`password`,`role`,verification_code,is_verified,code_expires_at,token)
     VALUES (?,?,?,?,?,0,DATE_ADD(NOW(),INTERVAL 5 MINUTE),NULL)"
 );
 $stmt->execute([
