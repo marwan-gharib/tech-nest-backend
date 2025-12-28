@@ -30,6 +30,15 @@ $stmt->execute([$email]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if ($user) {
+    if ($user['token'] !== null) {
+        echo json_encode([
+            "status" => false,
+            "message" => "User already logged in",
+            "data" => null
+        ]);
+        exit;
+    }
+
     // Update the social ID if it is not already registered
     if ($provider == "google" && empty($user['google_id'])) {
         // Update Google ID

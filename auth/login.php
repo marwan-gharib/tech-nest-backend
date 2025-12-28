@@ -17,6 +17,15 @@ $stmt->execute([$data['email']]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if ($user && password_verify($data['password'], $user['password'])) {
+    if ($user['token'] !== null) {
+        echo json_encode([
+            "status" => false,
+            "message" => "User already logged in",
+            "data" => null
+        ]);
+        exit;
+    }
+
     $token = bin2hex(random_bytes(16));
     $stmt = $conn->prepare("UPDATE users SET token=? WHERE id=?");
     $stmt->execute([$token, $user['id']]);
