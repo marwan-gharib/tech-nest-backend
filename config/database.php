@@ -2,7 +2,6 @@
 // Set the content type to JSON
 header("Content-Type: application/json");
 
-// Create a new PDO connection to the MySQL database
 $db_host = 'localhost';
 $db_name = 'ecommerce_db';
 $db_user = 'root';
@@ -14,7 +13,6 @@ try {
         $db_user,
         $db_pass,
     );
-    // Set PDO to throw exceptions on errors
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 } catch (PDOException $e) {
     http_response_code(500);

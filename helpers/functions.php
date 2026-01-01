@@ -7,9 +7,7 @@ require_once __DIR__ . "/../PHPMailer/SMTP.php";
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-/**
- * Standardized JSON Response
- */
+
 function sendResponse($status, $message, $data = null)
 {
     http_response_code($status);
@@ -20,35 +18,15 @@ function sendResponse($status, $message, $data = null)
     if ($data !== null) {
         $response['data'] = $data;
     }
-    // Ensure data is null if not provided in success 200/201 (optional, based on previous reqs)
-    // Actually user asked for {status, message} only for errors.
-    // For success, usually {status, message, data}.
-    // If status is error, remove data.
     if ($status >= 400) {
         unset($response['data']);
-    } else if ($data === null) {
-         // Should we add data: null for success?
-         // Previous code did: "data" => null.
-         // Let's keep consistency.
-         $response['data'] = null;
     }
 
     echo json_encode($response);
     exit;
 }
 
-/**
- * Check if the user is an admin (Deprecated - use validateAdminToken)
- */
-function checkAdmin($conn, $user_id)
-{
-    // This function is deprecated as we now use separate tables.
-    // Logic moved to validateAdminToken
-}
-
-/**
- * Validate User Token
- */
+/* Validate User Token */
 function validateToken($conn, $token)
 {
     if (!$token) {
@@ -66,9 +44,7 @@ function validateToken($conn, $token)
     return $user;
 }
 
-/**
- * Validate Admin Token
- */
+/* Validate Admin Token */
 function validateAdminToken($conn, $token)
 {
     if (!$token) {
@@ -86,15 +62,11 @@ function validateAdminToken($conn, $token)
     return $admin;
 }
 
-/**
- * Send Verification Email
- */
 function sendVerificationEmail($email, $code)
 {
     try {
         $mail = new PHPMailer(true);
 
-        // SMTP settings
         $mail->isSMTP();
         $mail->Host       = 'smtp.gmail.com';
         $mail->SMTPAuth   = true;
@@ -103,15 +75,12 @@ function sendVerificationEmail($email, $code)
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port       = 587;
 
-        // Sender & receiver
         $mail->setFrom('technest1485@gmail.com', 'Tech Nest');
         $mail->addAddress($email);
 
-        // Email format
         $mail->isHTML(true);
         $mail->Subject = 'Verify Your Email - Tech Nest';
 
-        // HTML Body
         $mail->Body = "
         <div style='font-family: Arial, sans-serif; background:#f4f6f8; padding:20px'>
             <div style='max-width:500px; margin:auto; background:#ffffff; border-radius:10px; overflow:hidden'>
@@ -147,7 +116,6 @@ function sendVerificationEmail($email, $code)
         </div>
         ";
 
-        // Fallback text version
         $mail->AltBody = "Your verification code is: $code (Valid for 5 minutes)";
 
         $mail->send();

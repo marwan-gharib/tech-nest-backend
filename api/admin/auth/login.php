@@ -31,7 +31,7 @@ if ($admin && password_verify($data['password'], $admin['password'])) {
         "id" => $admin['id'],
         "name" => $admin['name'],
         "email" => $admin['email'],
-        "role" => "admin", // Hardcoded as this is the admin table
+        "role" => "admin",
         "token" => $token
     ]);
 } else {

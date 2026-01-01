@@ -20,7 +20,7 @@ if (!$user) {
 }
 
 $token = bin2hex(random_bytes(25));
-// Cannot set verification_code to NULL as it is NOT NULL in DB. Set to 0.
+
 $stmt = $conn->prepare("UPDATE users SET is_verified=1, verification_code=0, code_expires_at=NULL, token=? WHERE email=?");
 $stmt->execute([$token, $data['email']]);
 

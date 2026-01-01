@@ -30,7 +30,6 @@ if (isset($_FILES['image']) && $_FILES['image']['error'] === 0) {
         sendResponse(400, "Invalid image type");
     }
 
-    // Deduplicate by content hash (same image stored once)
     $hash = hash_file('sha256', $_FILES['image']['tmp_name']);
     $existing = glob($upload_dir . $hash . '.*');
     if ($existing && count($existing) > 0) {
@@ -56,7 +55,6 @@ $existing = $check->fetch(PDO::FETCH_ASSOC);
 
 try {
     if ($existing) {
-        // If exists: increase stock and optionally update image
         if ($image_path) {
             $update = $conn->prepare("UPDATE products SET stock = stock + ?, image_url = COALESCE(?, image_url) WHERE id = ?");
             $update->execute([$stock, $image_path, $existing['id']]);
@@ -67,7 +65,6 @@ try {
 
         sendResponse(200, "Product already exists. Stock increased.");
     } else {
-        // Not exists: insert new product
         $stmt = $conn->prepare(
             "INSERT INTO products (name, description, price, stock, category_id, image_url)
              VALUES (?, ?, ?, ?, ?, ?)"

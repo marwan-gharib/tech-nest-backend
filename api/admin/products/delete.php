@@ -6,12 +6,26 @@ $data = json_decode(file_get_contents("php://input"), true);
 
 $admin = validateAdminToken($conn, $data['token'] ?? null);
 
-$stmt = $conn->prepare("DELETE FROM products WHERE id=?");
-try {
-    $stmt->execute([$data['id']]);
+if (empty($data['id'])) {
+    sendResponse(400, "Product id is required");
+}
 
-    if ($stmt->rowCount() === 0) {
+$stmt = $conn->prepare("SELECT image_url FROM products WHERE id = ? LIMIT 1");
+$stmt->execute([$data['id']]);
+$imagePath = $stmt->fetchColumn();
+
+try {
+    $delete = $conn->prepare("DELETE FROM products WHERE id = ?");
+    $delete->execute([$data['id']]);
+
+    if ($delete->rowCount() === 0) {
         sendResponse(404, "Product not found");
+    }
+
+    $fullPath = "../../../" . $imagePath;
+
+    if ($imagePath && file_exists($fullPath)) {
+        unlink($fullPath);
     }
 
     sendResponse(200, "Product deleted successfully");
