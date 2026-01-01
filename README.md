@@ -22,9 +22,12 @@ This document provides detailed information about the endpoints available in the
 4. [Cart](#cart)
    - [Add to Cart](#add-to-cart)
    - [List Cart Items](#list-cart-items)
+   - [Update Cart Quantity](#update-cart-quantity)
    - [Remove from Cart](#remove-from-cart)
 5. [Conventions & Policies](#conventions--policies)
    - [Authorization Rules](#authorization-rules)
+   - [Single Session Policy](#single-session-policy)
+   - [Email Verification Policy](#email-verification-policy)
    - [Input Formats & Content Types](#input-formats--content-types)
    - [Image Upload & Dedup Policy](#image-upload--dedup-policy)
    - [Cart Behavior](#cart-behavior)
@@ -38,7 +41,7 @@ This document provides detailed information about the endpoints available in the
 ### Register
 **Endpoint**: `POST /auth/register.php`
 
-**Description**: Registers a new user, sends a verification code to their email, and returns a token.
+**Description**: Registers a new user and sends a 6-digit verification code to their email via SMTP. The code expires in **5 minutes**.
 
 **Request Body**:
 ```json
@@ -64,7 +67,7 @@ This document provides detailed information about the endpoints available in the
 ### Login
 **Endpoint**: `POST /auth/login.php`
 
-**Description**: Logs in a user and returns a token.
+**Description**: Logs in a user and returns a token. **Enforces Single Session Policy**: If the user is already logged in (active token exists), the login request is denied.
 
 **Request Body**:
 ```json
@@ -89,9 +92,18 @@ This document provides detailed information about the endpoints available in the
 }
 ```
 
+**Error (Already Logged In)**:
+```json
+{
+  "status": false,
+  "message": "User already logged in",
+  "data": null
+}
+```
+
 ### Logout
 - Endpoint: `POST /auth/logout.php`
-- Purpose: Invalidate and clear the current token on server.
+- Purpose: Invalidate and clear the current token on server (sets token to NULL).
 - Auth: Requires valid `token` in request body.
 - Content-Type: `application/json`
 - Request Body:
@@ -108,14 +120,12 @@ This document provides detailed information about the endpoints available in the
   "data": null
 }
 ```
-- Errors:
-  - `401` with `{"status": false, "message": "Invalid or missing token"}` when token absent/invalid.
 
 ### Social Login
 - Endpoint: `POST /auth/social_login.php`
 - Purpose: Login/Register via social provider and issue a token.
 - Auth: Public (no token required).
-- Content-Type: `application/json`
+- **Policy**: Adheres to Single Session Policy. If the user is already logged in, the request is denied.
 - Request Body:
 ```json
 {
@@ -125,44 +135,11 @@ This document provides detailed information about the endpoints available in the
   "social_id": "1234567890"
 }
 ```
-- Behavior:
-  - If user exists by `email`, updates provider ID (`google_id`/`facebook_id`) if provided and returns a fresh token.
-  - If user doesn't exist, creates a new user with the given `name` and `email`, stores provider ID, sets `is_verified=1`, and returns a token.
-- Success Responses:
-  - Existing user:
-```json
-{
-  "status": true,
-  "message": "User already exists",
-  "data": {
-    "id": 1,
-    "name": "John Doe",
-    "email": "john.doe@example.com",
-    "token": "<generated_token>"
-  }
-}
-```
-  - New user:
-```json
-{
-  "status": true,
-  "message": "User registered successfully",
-  "data": {
-    "id": 7,
-    "name": "John Doe",
-    "email": "john.doe@example.com",
-    "token": "<generated_token>"
-  }
-}
-```
-- Errors:
-  - Missing fields: `{"status": false, "message": "Missing required fields"}`
 
 ### Verify Email
 - Endpoint: `POST /auth/verify_email.php`
-- Purpose: Verify a user's email using a verification code and issue a token.
-- Auth: Public (no token required).
-- Content-Type: `application/json`
+- Purpose: Verify a user's email using the 6-digit code sent during registration.
+- **Constraints**: Code must be valid and used within **5 minutes** of generation.
 - Request Body:
 ```json
 {
@@ -170,9 +147,6 @@ This document provides detailed information about the endpoints available in the
   "verification_code": 123456
 }
 ```
-- Behavior:
-  - Validates the verification code for the given email.
-  - On success, sets `is_verified=1` for the user and issues a token.
 - Success Response:
 ```json
 {
@@ -187,8 +161,6 @@ This document provides detailed information about the endpoints available in the
   }
 }
 ```
-- Errors:
-  - Invalid code/email: `{"status": false, "message": "Invalid verification code or email"}`
 
 ---
 
@@ -197,7 +169,7 @@ This document provides detailed information about the endpoints available in the
 ### Add Product
 **Endpoint**: `POST /products/add.php`
 
-**Description**: Adds a new product. If a product with the same `name` and `category_id` already exists, the API increases its `stock` by the provided `stock` instead of creating a new record. If an image is provided, the product's image may be updated. Requires admin privileges and a valid token.
+**Description**: Adds a new product. If a product with the same `name` and `category_id` already exists, the API increases its `stock` by the provided `stock` instead of creating a new record. Supports image deduplication. Requires admin privileges.
 
 **Request Body**:
 ```json
@@ -212,28 +184,10 @@ This document provides detailed information about the endpoints available in the
 }
 ```
 
-**Response (new product)**:
-```json
-{
-  "status": true,
-  "message": "Product added successfully",
-  "data": null
-}
-```
-
-**Response (existing product, stock increased)**:
-```json
-{
-  "status": true,
-  "message": "Product already exists. Stock increased.",
-  "data": null
-}
-```
-
 ### Update Product
 **Endpoint**: `POST /products/update.php`
 
-**Description**: Updates an existing product. Requires admin privileges and a valid token.
+**Description**: Updates an existing product. Requires admin privileges.
 
 **Request Body**:
 ```json
@@ -248,19 +202,10 @@ This document provides detailed information about the endpoints available in the
 }
 ```
 
-**Response**:
-```json
-{
-  "status": true,
-  "message": "Product updated successfully",
-  "data": null
-}
-```
-
 ### Delete Product
 **Endpoint**: `POST /products/delete.php`
 
-**Description**: Deletes a product. Requires admin privileges and a valid token.
+**Description**: Deletes a product. Requires admin privileges.
 
 **Request Body**:
 ```json
@@ -270,38 +215,10 @@ This document provides detailed information about the endpoints available in the
 }
 ```
 
-**Response**:
-```json
-{
-  "status": true,
-  "message": "Product deleted successfully",
-  "data": null
-}
-```
-
 ### List Products
 **Endpoint**: `GET /products/list.php`
 
 **Description**: Retrieves a list of all products.
-
-**Response**:
-```json
-{
-  "status": true,
-  "message": "Products retrieved successfully",
-  "data": [
-    {
-      "id": 1,
-      "name": "Product Name",
-      "description": "Product Description",
-      "price": 100.0,
-      "stock": 50,
-      "category_id": 1,
-      "image_url": "uploads/product_image.png"
-    }
-  ]
-}
-```
 
 ---
 
@@ -310,7 +227,7 @@ This document provides detailed information about the endpoints available in the
 ### Add Category
 **Endpoint**: `POST /categories/add.php`
 
-**Description**: Adds a new category. The category name must be unique (case-insensitive). If the name already exists, the API returns an error and does not create a new category. Requires admin privileges and a valid token.
+**Description**: Adds a new category. Name must be unique. Requires admin privileges.
 
 **Request Body**:
 ```json
@@ -320,28 +237,10 @@ This document provides detailed information about the endpoints available in the
 }
 ```
 
-**Response (category created)**:
-```json
-{
-  "status": true,
-  "message": "Category added successfully",
-  "data": null
-}
-```
-
-**Response (duplicate name)**:
-```json
-{
-  "status": false,
-  "message": "Category already exists",
-  "data": null
-}
-```
-
 ### Update Category
 **Endpoint**: `POST /categories/update.php`
 
-**Description**: Updates an existing category. Requires admin privileges and a valid token.
+**Description**: Updates an existing category. Requires admin privileges.
 
 **Request Body**:
 ```json
@@ -352,19 +251,10 @@ This document provides detailed information about the endpoints available in the
 }
 ```
 
-**Response**:
-```json
-{
-  "status": true,
-  "message": "Category updated successfully",
-  "data": null
-}
-```
-
 ### Delete Category
 **Endpoint**: `POST /categories/delete.php`
 
-**Description**: Deletes a category. Requires admin privileges and a valid token.
+**Description**: Deletes a category. Requires admin privileges.
 
 **Request Body**:
 ```json
@@ -374,33 +264,10 @@ This document provides detailed information about the endpoints available in the
 }
 ```
 
-**Response**:
-```json
-{
-  "status": true,
-  "message": "Category deleted successfully",
-  "data": null
-}
-```
-
 ### List Categories
 **Endpoint**: `GET /categories/list.php`
 
 **Description**: Retrieves a list of all categories.
-
-**Response**:
-```json
-{
-  "status": true,
-  "message": "Categories retrieved successfully",
-  "data": [
-    {
-      "id": 1,
-      "name": "Category Name"
-    }
-  ]
-}
-```
 
 ---
 
@@ -409,7 +276,7 @@ This document provides detailed information about the endpoints available in the
 ### Add to Cart
 **Endpoint**: `POST /cart/add.php`
 
-**Description**: Adds an item to the user's cart. Requires a valid token.
+**Description**: Adds an item to the user's cart. Increases quantity if item already exists. Requires user token.
 
 **Request Body**:
 ```json
@@ -420,42 +287,40 @@ This document provides detailed information about the endpoints available in the
 }
 ```
 
-**Response**:
-```json
-{
-  "status": true,
-  "message": "Item added to cart successfully",
-  "data": null
-}
-```
-
 ### List Cart Items
 **Endpoint**: `GET /cart/list.php`
 
-**Description**: Retrieves the items in the user's cart. Requires a valid token.
+**Description**: Retrieves the items in the user's cart.
 
 **Request Parameters**:
 - `token`: `<user_token>`
 
+### Update Cart Quantity
+**Endpoint**: `POST /cart/update_quantity.php`
+
+**Description**: Updates the quantity of a specific product in the cart. Verifies stock availability before updating.
+
+**Request Body**:
+```json
+{
+  "token": "<user_token>",
+  "product_id": 1,
+  "quantity": 5
+}
+```
+
 **Response**:
 ```json
 {
   "status": true,
-  "message": "Cart items retrieved successfully",
-  "data": [
-    {
-      "id": 1,
-      "product_id": 1,
-      "quantity": 2
-    }
-  ]
+  "message": "Cart quantity updated successfully"
 }
 ```
 
 ### Remove from Cart
 **Endpoint**: `POST /cart/remove.php`
 
-**Description**: Removes an item from the user's cart. Requires a valid token.
+**Description**: Removes an item from the user's cart.
 
 **Request Body**:
 ```json
@@ -465,45 +330,44 @@ This document provides detailed information about the endpoints available in the
 }
 ```
 
-**Response**:
-```json
-{
-  "status": true,
-  "message": "Item removed from cart successfully",
-  "data": null
-}
-```
-
 ---
 
 ## Conventions & Policies
 
 ### Authorization Rules
 - Public (no token): `products/list.php`, `categories/list.php`, `index.php`.
-- User token required: `cart/add.php`, `cart/list.php`, `cart/remove.php`.
-- Admin token required: `products/add.php`, `products/update.php`, `products/delete.php`, `categories/add.php`, `categories/update.php`, `categories/delete.php`.
+- User token required: All `cart/*` endpoints.
+- Admin token required: All write operations on `products` and `categories`.
+
+### Single Session Policy
+- **One Active Device**: A user (Admin or Regular) can only have one active session at a time.
+- **Login Restriction**: If a user is already logged in (has a non-null token), any new login attempt from the same or different device will be rejected until the previous session is terminated via Logout.
+- **Logout**: The `/auth/logout.php` endpoint sets the user's token to `NULL`, freeing up the session for a new login.
+
+### Email Verification Policy
+- **SMTP Delivery**: Verification codes are sent via a configured SMTP server (Gmail) for reliability.
+- **Code Expiry**: Verification codes are valid for **5 minutes** from the time of registration.
+- **Validation**: Attempting to verify with an expired code will result in an error.
 
 ### Input Formats & Content Types
-- `products/add.php` and `products/update.php` accept `multipart/form-data` for image upload with a `token` field in the form.
-- `categories/*` and `cart/*` accept `application/json` bodies including a `token` field.
-- `products/list.php` and `categories/list.php` are simple `GET` endpoints.
+- `products/add.php` and `products/update.php` accept `multipart/form-data` (or JSON with base64) for image upload.
+- Most other endpoints accept `application/json`.
 
 ### Image Upload & Dedup Policy
 - When uploading a product image, the backend computes a SHA-256 hash of the image content and stores it once under `uploads/<hash>.<ext>`.
-- If an identical image has already been uploaded, the existing file is reused and no duplicate file is saved.
-- Supported image types: `jpg`, `jpeg`, `png`, `webp`.
+- If an identical image has already been uploaded, the existing file is reused.
 
 ### Cart Behavior
-- Adding the same `product_id` for the same user increases `quantity` on the existing cart item instead of creating a duplicate row.
-- Cart listing uses the user derived from the `token` (ignores any client-provided `user_id`).
+- Adding the same `product_id` for the same user increases `quantity` on the existing cart item.
+- Cart listing is strictly scoped to the user identified by the provided `token`.
 
 ### Error Handling & Response Shape
-- All endpoints return JSON with a consistent shape:
+- All endpoints return JSON with:
   - `status`: boolean
   - `message`: human-readable status
   - `data`: payload or `null`
-  - `error`: included only on failures with internal error messages
 
 ### Security Notes
-- The backend derives the authenticated user exclusively from the `token`; client-supplied identifiers (like `user_id`) are ignored for protected endpoints.
-- Admin-only endpoints perform a role check and deny access for non-admin users.
+- The backend derives the authenticated user exclusively from the `token`.
+- Admin-only endpoints perform a strict role check.
+- Token validation ensures the user exists and the token matches the one in the database.
