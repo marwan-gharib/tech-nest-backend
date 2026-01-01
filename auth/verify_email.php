@@ -15,10 +15,11 @@ $stmt->execute([$data['email'], $data['verification_code']]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$user) {
+    http_response_code(400);
+    header('Content-Type: application/json');
     echo json_encode([
-        "status" => false,
-        "message" => "Invalid verification code or email.",
-        "data" => null
+        "status" => 400,
+        "message" => "Invalid verification code or email."
     ]);
     exit;
 }
@@ -27,8 +28,10 @@ $token = bin2hex(random_bytes(25));
 $stmt = $conn->prepare("UPDATE users SET is_verified=1, verification_code=NULL, code_expires_at=NULL, token=? WHERE email=?");
 $stmt->execute([$token, $data['email']]);
 
+http_response_code(200);
+header('Content-Type: application/json');
 echo json_encode([
-    "status" => true,
+    "status" => 200,
     "message" => "Email verified successfully.",
     "data" => [
         "id" => $user['id'],

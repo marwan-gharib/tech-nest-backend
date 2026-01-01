@@ -4,19 +4,19 @@ include "../config.php";
 $data = json_decode(file_get_contents("php://input"), true);
 
 if (empty($data['name']) || empty($data['email']) || empty($data['password'])) {
+    http_response_code(400);
     echo json_encode([
-        "status" => false,
-        "message" => "All fields are required",
-        "data" => null
+        "status" => 400,
+        "message" => "All fields are required"
     ]);
     exit;
 }
 
 if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+    http_response_code(400);
     echo json_encode([
-        "status" => false,
-        "message" => "Invalid email format",
-        "data" => null
+        "status" => 400,
+        "message" => "Invalid email format"
     ]);
     exit;
 }
@@ -24,10 +24,10 @@ if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
 $stmt = $conn->prepare("SELECT * FROM users WHERE email=?");
 $stmt->execute([$data['email']]);
 if ($stmt->fetch(PDO::FETCH_ASSOC)) {
+    http_response_code(409);
     echo json_encode([
-        "status" => false,
-        "message" => "Email already exists",
-        "data" => null
+        "status" => 409,
+        "message" => "Email already exists"
     ]);
     exit;
 }
@@ -49,8 +49,9 @@ $stmt->execute([
 
 sendVerificationEmail($data['email'], $verification_code);
 
+http_response_code(201);
 echo json_encode([
-    "status" => true,
+    "status" => 201,
     "message" => "Registration successful. Verification code sent to email.",
     "data" => [
         "name" => $data['name'],

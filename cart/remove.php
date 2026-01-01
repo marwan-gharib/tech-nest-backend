@@ -13,24 +13,25 @@ try {
     $stmt->execute([$data['id'], $user['id']]);
 
     if ($stmt->rowCount() === 0) {
+        http_response_code(404);
         echo json_encode([
-            "status" => false,
-            "message" => "Item not found in cart",
-            "data" => null
+            "status" => 404,
+            "message" => "Item not found in cart"
         ]);
         exit;
     }
 
+    http_response_code(200);
     echo json_encode([
-        "status" => true,
+        "status" => 200,
         "message" => "Item removed from cart successfully",
         "data" => null
     ]);
 
 } catch (Exception $e) {
+    http_response_code(500);
     echo json_encode([
-        "status" => false,
-        "message" => "Failed to remove item from cart",
-        "error" => $e->getMessage()
+        "status" => 500,
+        "message" => "Failed to remove item from cart"
     ]);
 }

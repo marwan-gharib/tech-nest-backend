@@ -28,7 +28,7 @@ function checkAdmin($conn, $user_id)
     // If the user does not exist or is not an admin, deny access
     if (!$user || $user['role'] !== 'admin') {
         echo json_encode([
-            "status" => false,
+            "status" => 403,
             "message" => "Access denied (Admin only)"
         ]);
         exit;
@@ -44,9 +44,8 @@ function validateToken($conn, $token)
 
     if (!$user) {
         echo json_encode([
-            "status" => false,
-            "message" => "Invalid or missing token",
-            "data" => null
+            "status" => 401,
+            "message" => "Invalid or missing token"
         ]);
         exit;
     }
@@ -126,10 +125,10 @@ function sendVerificationEmail($email, $code)
         $mail->send();
 
     } catch (Exception $e) {
+        http_response_code(500);
         echo json_encode([
-            "status" => false,
-            "message" => "Failed to send verification email",
-            "error" => $e->getMessage()
+            "status" => 500,
+            "message" => "Failed to send verification email"
         ]);
         exit;
     }

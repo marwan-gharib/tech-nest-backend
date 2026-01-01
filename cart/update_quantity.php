@@ -4,8 +4,9 @@ include "../config.php";
 $data = json_decode(file_get_contents("php://input"), true);
 
 if (!isset($data['quantity']) || !is_numeric($data['quantity']) || $data['quantity'] <= 0) {
+    http_response_code(400);
     echo json_encode([
-        "status" => false,
+        "status" => 400,
         "message" => "Quantity must be a positive number"
     ]);
     exit;
@@ -20,16 +21,18 @@ $productStmt->execute([$data['product_id']]);
 $product = $productStmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$product) {
+    http_response_code(404);
     echo json_encode([
-        "status" => false,
+        "status" => 404,
         "message" => "Product not found"
     ]);
     exit;
 }
 
 if ((int)$data['quantity'] > (int)$product['stock']) {
+    http_response_code(400);
     echo json_encode([
-        "status" => false,
+        "status" => 400,
         "message" => "Only {$product['stock']} items available"
     ]);
     exit;
@@ -42,8 +45,9 @@ $cartStmt->execute([$user['id'], $data['product_id']]);
 $cart = $cartStmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$cart) {
+    http_response_code(404);
     echo json_encode([
-        "status" => false,
+        "status" => 404,
         "message" => "Item not found in cart"
     ]);
     exit;
@@ -57,7 +61,8 @@ $update->execute([
     $cart['id']
 ]);
 
+http_response_code(200);
 echo json_encode([
-    "status" => true,
+    "status" => 200,
     "message" => "Cart quantity updated successfully"
 ]);

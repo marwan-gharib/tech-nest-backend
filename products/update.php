@@ -4,7 +4,8 @@ include "../config.php";
 $token = $_POST['token'] ?? null;
 
 if (!$token) {
-    echo json_encode(["status"=>false,"message"=>"Token required"]);
+    http_response_code(401);
+    echo json_encode(["status"=>401,"message"=>"Token required"]);
     exit;
 }
 
@@ -18,7 +19,8 @@ if (
     !isset($_POST['price']) ||
     !isset($_POST['stock'])
 ) {
-    echo json_encode(["status"=>false,"message"=>"All fields required"]);
+    http_response_code(400);
+    echo json_encode(["status"=>400,"message"=>"All fields required"]);
     exit;
 }
 
@@ -34,7 +36,8 @@ if (isset($_FILES['image']) && $_FILES['image']['error'] === 0) {
     $allowed = ['jpg','jpeg','png','webp'];
 
     if (!in_array($ext, $allowed)) {
-        echo json_encode(["status"=>false,"message"=>"Invalid image type"]);
+        http_response_code(400);
+        echo json_encode(["status"=>400,"message"=>"Invalid image type"]);
         exit;
     }
 
@@ -47,7 +50,8 @@ if (isset($_FILES['image']) && $_FILES['image']['error'] === 0) {
         $image_name = $hash . "." . $ext;
         $image_path = "uploads/" . $image_name;
         if (!move_uploaded_file($_FILES['image']['tmp_name'], "../" . $image_path)) {
-            echo json_encode(["status"=>false,"message"=>"Failed to upload image"]);
+            http_response_code(500);
+            echo json_encode(["status"=>500,"message"=>"Failed to upload image"]);
             exit;
         }
     }
@@ -72,11 +76,12 @@ try {
         $_POST['id']
     ]);
 
-    echo json_encode(["status"=>true,"message"=>"Product updated successfully"]);
+    http_response_code(200);
+    echo json_encode(["status"=>200,"message"=>"Product updated successfully"]);
 } catch (Exception $e) {
+    http_response_code(500);
     echo json_encode([
-        "status"=>false,
-        "message"=>"Failed to update product",
-        "error"=>$e->getMessage()
+        "status"=>500,
+        "message"=>"Failed to update product"
     ]);
 }

@@ -8,10 +8,10 @@ checkAdmin($conn, $user['id']);
 
 $name = trim($data['name']);
 if ($name === '') {
+    http_response_code(400);
     echo json_encode([
-        "status" => false,
-        "message" => "Category name is required",
-        "data" => null
+        "status" => 400,
+        "message" => "Category name is required"
     ]);
     exit;
 }
@@ -19,10 +19,10 @@ if ($name === '') {
 $dup = $conn->prepare("SELECT id FROM categories WHERE LOWER(name) = LOWER(?) LIMIT 1");
 $dup->execute([$name]);
 if ($dup->fetch(PDO::FETCH_ASSOC)) {
+    http_response_code(409);
     echo json_encode([
-        "status" => false,
-        "message" => "Category already exists",
-        "data" => null
+        "status" => 409,
+        "message" => "Category already exists"
     ]);
     exit;
 }
@@ -31,15 +31,16 @@ $stmt = $conn->prepare("INSERT INTO categories (`name`) VALUES (?)");
 try {
     $stmt->execute([$name]);
 
+    http_response_code(201);
     echo json_encode([
-        "status" => true,
+        "status" => 201,
         "message" => "Category added successfully",
         "data" => null
     ]);
 } catch (Exception $e) {
+    http_response_code(500);
     echo json_encode([
-        "status" => false,
-        "message" => "Failed to add category",
-        "error" => $e->getMessage()
+        "status" => 500,
+        "message" => "Failed to add category"
     ]);
 }

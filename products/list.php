@@ -5,15 +5,16 @@ $stmt = $conn->query("SELECT * FROM products");
 try {
     $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+    http_response_code(200);
     echo json_encode([
-        "status" => true,
+        "status" => 200,
         "message" => "Products retrieved successfully",
         "data" => $data
     ]);
 } catch (Exception $e) {
+    http_response_code(500);
     echo json_encode([
-        "status" => false,
-        "message" => "Failed to retrieve products",
-        "error" => $e->getMessage()
+        "status" => 500,
+        "message" => "Failed to retrieve products"
     ]);
 }

@@ -4,10 +4,10 @@ include "../config.php";
 $data = json_decode(file_get_contents("php://input"), true);
 
 if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+    http_response_code(400);
     echo json_encode([
-        "status" => false,
-        "message" => "Invalid email format",
-        "data" => null
+        "status" => 400,
+        "message" => "Invalid email format"
     ]);
     exit;
 }
@@ -18,10 +18,10 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if ($user && password_verify($data['password'], $user['password'])) {
     if ($user['token'] !== null) {
+        http_response_code(403);
         echo json_encode([
-            "status" => false,
-            "message" => "User already logged in",
-            "data" => null
+            "status" => 403,
+            "message" => "User already logged in"
         ]);
         exit;
     }
@@ -30,8 +30,9 @@ if ($user && password_verify($data['password'], $user['password'])) {
     $stmt = $conn->prepare("UPDATE users SET token=? WHERE id=?");
     $stmt->execute([$token, $user['id']]);
 
+    http_response_code(200);
     echo json_encode([
-        "status" => true,
+        "status" => 200,
         "message" => "Login successful",
         "data" => [
             "id" => $user['id'],
@@ -42,9 +43,9 @@ if ($user && password_verify($data['password'], $user['password'])) {
         ]
     ]);
 } else {
+    http_response_code(401);
     echo json_encode([
-        "status" => false,
-        "message" => "Invalid email or password",
-        "data" => null
+        "status" => 401,
+        "message" => "Invalid email or password"
     ]);
 }

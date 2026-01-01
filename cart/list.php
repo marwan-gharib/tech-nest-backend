@@ -10,8 +10,9 @@ $stmt->execute([$user['id']]);
 $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 
+http_response_code(200);
 echo json_encode([
-    "status" => true,
+    "status" => 200,
     "message" => "Cart items retrieved successfully",
     "data" => $data
 ]);

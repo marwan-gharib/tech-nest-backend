@@ -55,7 +55,7 @@ This document provides detailed information about the endpoints available in the
 **Response**:
 ```json
 {
-  "status": true,
+  "status": 201,
   "message": "Registration successful. Verification code sent to email.",
   "data": {
     "name": "John Doe",
@@ -80,7 +80,7 @@ This document provides detailed information about the endpoints available in the
 **Response**:
 ```json
 {
-  "status": true,
+  "status": 200,
   "message": "Login successful",
   "data": {
     "id": 1,
@@ -95,7 +95,7 @@ This document provides detailed information about the endpoints available in the
 **Error (Already Logged In)**:
 ```json
 {
-  "status": false,
+  "status": 403,
   "message": "User already logged in",
   "data": null
 }
@@ -115,7 +115,7 @@ This document provides detailed information about the endpoints available in the
 - Success Response:
 ```json
 {
-  "status": true,
+  "status": 200,
   "message": "Logout successful",
   "data": null
 }
@@ -150,7 +150,7 @@ This document provides detailed information about the endpoints available in the
 - Success Response:
 ```json
 {
-  "status": true,
+  "status": 200,
   "message": "Email verified successfully.",
   "data": {
     "id": 1,
@@ -312,7 +312,7 @@ This document provides detailed information about the endpoints available in the
 **Response**:
 ```json
 {
-  "status": true,
+  "status": 200,
   "message": "Cart quantity updated successfully"
 }
 ```
@@ -341,7 +341,7 @@ This document provides detailed information about the endpoints available in the
 
 ### Single Session Policy
 - **One Active Device**: A user (Admin or Regular) can only have one active session at a time.
-- **Login Restriction**: If a user is already logged in (has a non-null token), any new login attempt from the same or different device will be rejected until the previous session is terminated via Logout.
+- **Login Restriction**: If a user is already logged in (has a non-null token), any new login attempt from the same or different device will be rejected with status `403` until the previous session is terminated via Logout.
 - **Logout**: The `/auth/logout.php` endpoint sets the user's token to `NULL`, freeing up the session for a new login.
 
 ### Email Verification Policy
@@ -362,10 +362,13 @@ This document provides detailed information about the endpoints available in the
 - Cart listing is strictly scoped to the user identified by the provided `token`.
 
 ### Error Handling & Response Shape
-- All endpoints return JSON with:
-  - `status`: boolean
-  - `message`: human-readable status
-  - `data`: payload or `null`
+- **Success Responses**:
+  - `status`: integer (e.g., 200, 201)
+  - `message`: success message string
+  - `data`: payload object or `null`
+- **Error Responses**:
+  - `status`: integer (e.g., 400, 401, 403, 404, 500)
+  - `message`: error description string
 
 ### Security Notes
 - The backend derives the authenticated user exclusively from the `token`.

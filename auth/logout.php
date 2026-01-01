@@ -9,15 +9,16 @@ try {
     $stmt = $conn->prepare("UPDATE users SET token = NULL WHERE id = ?");
     $stmt->execute([$user['id']]);
 
+    http_response_code(200);
     echo json_encode([
-        "status" => true,
+        "status" => 200,
         "message" => "Logout successful",
         "data" => null
     ]);
 } catch (Exception $e) {
+    http_response_code(500);
     echo json_encode([
-        "status" => false,
-        "message" => "Failed to logout",
-        "error" => $e->getMessage()
+        "status" => 500,
+        "message" => "Failed to logout"
     ]);
 }

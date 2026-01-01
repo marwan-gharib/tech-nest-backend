@@ -4,8 +4,9 @@ include "../config.php";
 $data = json_decode(file_get_contents("php://input"), true);
 
 if (!isset($data['quantity']) || !is_numeric($data['quantity']) || $data['quantity'] <= 0) {
+    http_response_code(400);
     echo json_encode([
-        "status" => false,
+        "status" => 400,
         "message" => "Quantity must be a positive number"
     ]);
     exit;
@@ -20,8 +21,9 @@ $productStmt->execute([$data['product_id']]);
 $product = $productStmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$product) {
+    http_response_code(404);
     echo json_encode([
-        "status" => false,
+        "status" => 404,
         "message" => "Product not found"
     ]);
     exit;
@@ -38,8 +40,9 @@ $currentQty   = $existing ? (int)$existing['quantity'] : 0;
 $totalQty     = $currentQty + $requestedQty;
 
 if ($totalQty > (int)$product['stock']) {
+    http_response_code(400);
     echo json_encode([
-        "status" => false,
+        "status" => 400,
         "message" => "Only {$product['stock']} items available"
     ]);
     exit;
@@ -51,8 +54,9 @@ if ($existing) {
     );
     $update->execute([$totalQty, $existing['id']]);
     if ($update->rowCount() === 0) {
+        http_response_code(500);
         echo json_encode([
-            "status" => false,
+            "status" => 500,
             "message" => "Failed to update cart item"
         ]);
         exit;
@@ -68,15 +72,17 @@ if ($existing) {
         $requestedQty
     ]);
     if ($insert->rowCount() === 0) {
+        http_response_code(500);
         echo json_encode([
-            "status" => false,
+            "status" => 500,
             "message" => "Failed to insert cart item"
         ]);
         exit;
     }
 }
 
+http_response_code(200);
 echo json_encode([
-    "status" => true,
+    "status" => 200,
     "message" => "Item added to cart successfully"
 ]);

@@ -11,8 +11,9 @@ if (
     empty($_POST['stock']) ||
     empty($_POST['category_id'])
 ) {
+    http_response_code(400);
     echo json_encode([
-        "status" => false,
+        "status" => 400,
         "message" => "All fields are required"
     ]);
     exit;
@@ -31,7 +32,8 @@ if (!empty($_FILES['img']['name'])) {
     $ext = strtolower(pathinfo($_FILES['img']['name'], PATHINFO_EXTENSION));
     $allowed = ['jpg','jpeg','png','webp'];
     if (!in_array($ext, $allowed)) {
-        echo json_encode(["status" => false, "message" => "Invalid image type"]);
+        http_response_code(400);
+        echo json_encode(["status" => 400, "message" => "Invalid image type"]);
         exit;
     }
 
@@ -44,7 +46,8 @@ if (!empty($_FILES['img']['name'])) {
         $image_name = $hash . "." . $ext;
         $image_path = "uploads/" . $image_name;
         if (!move_uploaded_file($_FILES['img']['tmp_name'], "../" . $image_path)) {
-            echo json_encode(["status" => false, "message" => "Failed to upload image"]);
+            http_response_code(500);
+            echo json_encode(["status" => 500, "message" => "Failed to upload image"]);
             exit;
         }
     }
@@ -71,8 +74,9 @@ try {
             $update->execute([$stock, $existing['id']]);
         }
 
+        http_response_code(200);
         echo json_encode([
-            "status" => true,
+            "status" => 200,
             "message" => "Product already exists. Stock increased."
         ]);
     } else {
@@ -91,15 +95,16 @@ try {
             $image_path
         ]);
 
+        http_response_code(201);
         echo json_encode([
-            "status" => true,
+            "status" => 201,
             "message" => "Product added successfully"
         ]);
     }
 } catch (Exception $e) {
+    http_response_code(500);
     echo json_encode([
-        "status" => false,
-        "message" => "Failed to add product",
-        "error" => $e->getMessage()
+        "status" => 500,
+        "message" => "Failed to add product"
     ]);
 }

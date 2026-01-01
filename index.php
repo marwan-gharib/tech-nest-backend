@@ -2,7 +2,7 @@
 header("Content-Type: application/json");
 
 echo json_encode([
-    "status" => true,
+    "status" => 200,
     "message" => "Welcome to the E-commerce Backend API",
     "endpoints" => [
         "auth/login.php" => "Login endpoint",

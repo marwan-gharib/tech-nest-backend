@@ -9,15 +9,16 @@ $provider = $data['provider']; // The social login provider (Google or Facebook)
 $social_id = $data['social_id'];
 
 if (!$email || !$provider || !$social_id) {
-    echo json_encode(["status" => false, "message" => "Invalid data"]);
+    http_response_code(400);
+    echo json_encode(["status" => 400, "message" => "Invalid data"]);
     exit;
 }
 
 if (empty($name) || empty($provider)) {
+    http_response_code(400);
     echo json_encode([
-        "status" => false,
-        "message" => "Name and provider are required",
-        "data" => null
+        "status" => 400,
+        "message" => "Name and provider are required"
     ]);
     exit;
 }
@@ -31,10 +32,10 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if ($user) {
     if ($user['token'] !== null) {
+        http_response_code(403);
         echo json_encode([
-            "status" => false,
-            "message" => "User already logged in",
-            "data" => null
+            "status" => 403,
+            "message" => "User already logged in"
         ]);
         exit;
     }
@@ -55,8 +56,9 @@ if ($user) {
     $stmt = $conn->prepare("UPDATE users SET token=? WHERE id=?");
     $stmt->execute([$token, $user['id']]);
 
+    http_response_code(200);
     echo json_encode([
-        "status" => true,
+        "status" => 200,
         "message" => "User already exists, Login successfully",
         "data" => [
             "id" => $user['id'],
@@ -85,8 +87,9 @@ $stmt->execute([
 
 $user_id = $conn->lastInsertId();
 
+http_response_code(201);
 echo json_encode([
-    "status" => true,
+    "status" => 201,
     "message" => "User registered successfully",
     "data" => [
         "id" => $user_id,
