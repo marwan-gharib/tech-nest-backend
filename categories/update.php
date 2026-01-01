@@ -17,7 +17,7 @@ if (empty($data['name'])) {
 
 // Prevent duplicate name (case-insensitive) excluding current id
 $name = trim($data['name']);
-$category_id = intval($data['category_id']);
+$category_id = intval($data['id']);
 $dup = $conn->prepare("SELECT id FROM categories WHERE LOWER(name)=LOWER(?) AND id<>? LIMIT 1");
 $dup->execute([$name, $category_id]);
 if ($dup->fetch(PDO::FETCH_ASSOC)) {

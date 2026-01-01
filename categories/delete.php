@@ -8,13 +8,22 @@ checkAdmin($conn, $user['id']);
 
 $stmt = $conn->prepare("DELETE FROM categories WHERE id=?");
 try {
-    $stmt->execute([$data['category_id']]);
+    $stmt->execute([$data['id']]);
+
+    if ($stmt->rowCount() === 0) {
+        echo json_encode([
+            "status" => false,
+            "message" => "Category not found"
+        ]);
+        exit;
+    }
 
     echo json_encode([
         "status" => true,
         "message" => "Category deleted successfully",
         "data" => null
     ]);
+
 } catch (Exception $e) {
     echo json_encode([
         "status" => false,

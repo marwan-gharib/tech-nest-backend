@@ -1,10 +1,9 @@
 <?php
 include "../config.php";
 
-$user_id = $_POST['user_id'] ?? null;
 $token = $_POST['token'] ?? null;
 
-if (!$user_id || !$token) {
+if (!$token) {
     echo json_encode(["status"=>false,"message"=>"Token required"]);
     exit;
 }
