@@ -1,5 +1,6 @@
 <?php
-include "../config.php";
+include "../../../config/database.php";
+include "../../../helpers/functions.php";
 
 $data = json_decode(file_get_contents("php://input"), true);
 
@@ -9,18 +10,11 @@ $provider = $data['provider']; // The social login provider (Google or Facebook)
 $social_id = $data['social_id'];
 
 if (!$email || !$provider || !$social_id) {
-    http_response_code(400);
-    echo json_encode(["status" => 400, "message" => "Invalid data"]);
-    exit;
+    sendResponse(400, "Invalid data");
 }
 
 if (empty($name) || empty($provider)) {
-    http_response_code(400);
-    echo json_encode([
-        "status" => 400,
-        "message" => "Name and provider are required"
-    ]);
-    exit;
+    sendResponse(400, "Name and provider are required");
 }
 
 $token = bin2hex(random_bytes(25));
@@ -32,23 +26,16 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if ($user) {
     if ($user['token'] !== null) {
-        http_response_code(403);
-        echo json_encode([
-            "status" => 403,
-            "message" => "User already logged in"
-        ]);
-        exit;
+        sendResponse(403, "User already logged in");
     }
 
     // Update the social ID if it is not already registered
     if ($provider == "google" && empty($user['google_id'])) {
-        // Update Google ID
         $conn->prepare("UPDATE users SET google_id=? WHERE id=?")
             ->execute([$social_id, $user['id']]);
     }
 
     if ($provider == "facebook" && empty($user['facebook_id'])) {
-        // Update Facebook ID
         $conn->prepare("UPDATE users SET facebook_id=? WHERE id=?")
             ->execute([$social_id, $user['id']]);
     }
@@ -56,45 +43,37 @@ if ($user) {
     $stmt = $conn->prepare("UPDATE users SET token=? WHERE id=?");
     $stmt->execute([$token, $user['id']]);
 
-    http_response_code(200);
-    echo json_encode([
-        "status" => 200,
-        "message" => "User already exists, Login successfully",
-        "data" => [
-            "id" => $user['id'],
-            "name" => $user['name'],
-            "email" => $user['email'],
-            "token" => $token
-        ]
+    sendResponse(200, "User already exists, Login successfully", [
+        "id" => $user['id'],
+        "name" => $user['name'],
+        "email" => $user['email'],
+        "token" => $token
     ]);
-    exit;
 }
 
 // Register a new user if they do not exist
 $stmt = $conn->prepare(
-    "INSERT INTO users (`name`,email,`role`,google_id,facebook_id,token)
-     VALUES (?,?,?,?,?,?)"
+    "INSERT INTO users (`name`,email,google_id,facebook_id,token,verification_code,is_verified)
+     VALUES (?,?,?,?,?,?,?)"
 );
+
+$verification_code = rand(100000, 999999);
 
 $stmt->execute([
     $name,
     $email,
-    "user",
     $provider == "google" ? $social_id : null,
     $provider == "facebook" ? $social_id : null,
-    $token
+    $token,
+    $verification_code,
+    1 // is_verified = 1
 ]);
 
 $user_id = $conn->lastInsertId();
 
-http_response_code(201);
-echo json_encode([
-    "status" => 201,
-    "message" => "User registered successfully",
-    "data" => [
-        "id" => $user_id,
-        "name" => $name,
-        "email" => $email,
-        "token" => $token
-    ]
+sendResponse(201, "User registered successfully", [
+    "id" => $user_id,
+    "name" => $name,
+    "email" => $email,
+    "token" => $token
 ]);

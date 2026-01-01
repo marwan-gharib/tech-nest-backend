@@ -1,16 +1,9 @@
 <?php
-include "../config.php";
+include "../../../config/database.php";
+include "../../../helpers/functions.php";
 
 $token = $_POST['token'] ?? null;
-
-if (!$token) {
-    http_response_code(401);
-    echo json_encode(["status"=>401,"message"=>"Token required"]);
-    exit;
-}
-
-$user = validateToken($conn, $token);
-checkAdmin($conn, $user['id']);
+$admin = validateAdminToken($conn, $token);
 
 if (
     empty($_POST['id']) ||
@@ -19,16 +12,14 @@ if (
     !isset($_POST['price']) ||
     !isset($_POST['stock'])
 ) {
-    http_response_code(400);
-    echo json_encode(["status"=>400,"message"=>"All fields required"]);
-    exit;
+    sendResponse(400, "All fields required");
 }
 
 $image_path = null;
 
 if (isset($_FILES['image']) && $_FILES['image']['error'] === 0) {
 
-    $upload_dir = "../uploads/";
+    $upload_dir = "../../../uploads/";
 
     if (!is_dir($upload_dir)) mkdir($upload_dir, 0777, true);
 
@@ -36,9 +27,7 @@ if (isset($_FILES['image']) && $_FILES['image']['error'] === 0) {
     $allowed = ['jpg','jpeg','png','webp'];
 
     if (!in_array($ext, $allowed)) {
-        http_response_code(400);
-        echo json_encode(["status"=>400,"message"=>"Invalid image type"]);
-        exit;
+        sendResponse(400, "Invalid image type");
     }
 
     // Deduplicate by content hash
@@ -49,10 +38,8 @@ if (isset($_FILES['image']) && $_FILES['image']['error'] === 0) {
     } else {
         $image_name = $hash . "." . $ext;
         $image_path = "uploads/" . $image_name;
-        if (!move_uploaded_file($_FILES['image']['tmp_name'], "../" . $image_path)) {
-            http_response_code(500);
-            echo json_encode(["status"=>500,"message"=>"Failed to upload image"]);
-            exit;
+        if (!move_uploaded_file($_FILES['image']['tmp_name'], "../../../" . $image_path)) {
+            sendResponse(500, "Failed to upload image");
         }
     }
 } else {
@@ -76,12 +63,7 @@ try {
         $_POST['id']
     ]);
 
-    http_response_code(200);
-    echo json_encode(["status"=>200,"message"=>"Product updated successfully"]);
+    sendResponse(200, "Product updated successfully");
 } catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode([
-        "status"=>500,
-        "message"=>"Failed to update product"
-    ]);
+    sendResponse(500, "Failed to update product");
 }

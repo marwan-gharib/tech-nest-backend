@@ -3,21 +3,46 @@ header("Content-Type: application/json");
 
 echo json_encode([
     "status" => 200,
-    "message" => "Welcome to the E-commerce Backend API",
-    "endpoints" => [
-        "auth/login.php" => "Login endpoint",
-        "auth/register.php" => "Register endpoint",
-        "auth/logout.php" => "Logout endpoint",
-        "cart/add.php" => "Add to cart",
-        "cart/list.php" => "List cart items",
-        "cart/remove.php" => "Remove from cart",
-        "categories/add.php" => "Add category",
-        "categories/list.php" => "List categories",
-        "categories/delete.php" => "Delete category",
-        "orders/create.php" => "Create order",
-        "orders/list.php" => "List orders",
-        "products/add.php" => "Add product",
-        "products/list.php" => "List products",
-        "products/delete.php" => "Delete product"
+    "message" => "Welcome to the E-commerce Backend API (New Structure)",
+    "documentation" => "Please refer to README.md for full documentation.",
+    "structure" => [
+        "Admin" => [
+            "Auth" => [
+                "Login" => "api/admin/auth/login.php"
+            ],
+            "Products" => [
+                "List" => "api/admin/products/list.php",
+                "Add" => "api/admin/products/add.php",
+                "Update" => "api/admin/products/update.php",
+                "Delete" => "api/admin/products/delete.php"
+            ],
+            "Categories" => [
+                "List" => "api/admin/categories/list.php",
+                "Add" => "api/admin/categories/add.php",
+                "Update" => "api/admin/categories/update.php",
+                "Delete" => "api/admin/categories/delete.php"
+            ]
+        ],
+        "User" => [
+            "Auth" => [
+                "Register" => "api/user/auth/register.php",
+                "Login" => "api/user/auth/login.php",
+                "Social Login" => "api/user/auth/social_login.php",
+                "Verify Email" => "api/user/auth/verify_email.php",
+                "Logout" => "api/user/auth/logout.php"
+            ],
+            "Products" => [
+                "List" => "api/user/products/list.php"
+            ],
+            "Categories" => [
+                "List" => "api/user/categories/list.php"
+            ],
+            "Cart" => [
+                "Add" => "api/user/cart/add.php",
+                "List" => "api/user/cart/list.php",
+                "Update Quantity" => "api/user/cart/update_quantity.php",
+                "Remove" => "api/user/cart/remove.php"
+            ]
+        ]
     ]
 ]);

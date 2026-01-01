@@ -1,15 +1,11 @@
 <?php
-include "../config.php";
+include "../../../config/database.php";
+include "../../../helpers/functions.php";
 
 $data = json_decode(file_get_contents("php://input"), true);
 
 if (!isset($data['quantity']) || !is_numeric($data['quantity']) || $data['quantity'] <= 0) {
-    http_response_code(400);
-    echo json_encode([
-        "status" => 400,
-        "message" => "Quantity must be a positive number"
-    ]);
-    exit;
+    sendResponse(400, "Quantity must be a positive number");
 }
 
 $user = validateToken($conn, $data['token'] ?? null);
@@ -21,12 +17,7 @@ $productStmt->execute([$data['product_id']]);
 $product = $productStmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$product) {
-    http_response_code(404);
-    echo json_encode([
-        "status" => 404,
-        "message" => "Product not found"
-    ]);
-    exit;
+    sendResponse(404, "Product not found");
 }
 
 $cartStmt = $conn->prepare(
@@ -40,12 +31,7 @@ $currentQty   = $existing ? (int)$existing['quantity'] : 0;
 $totalQty     = $currentQty + $requestedQty;
 
 if ($totalQty > (int)$product['stock']) {
-    http_response_code(400);
-    echo json_encode([
-        "status" => 400,
-        "message" => "Only {$product['stock']} items available"
-    ]);
-    exit;
+    sendResponse(400, "Only {$product['stock']} items available");
 }
 
 if ($existing) {
@@ -54,12 +40,7 @@ if ($existing) {
     );
     $update->execute([$totalQty, $existing['id']]);
     if ($update->rowCount() === 0) {
-        http_response_code(500);
-        echo json_encode([
-            "status" => 500,
-            "message" => "Failed to update cart item"
-        ]);
-        exit;
+        sendResponse(500, "Failed to update cart item");
     }
 } else {
     $insert = $conn->prepare(
@@ -72,17 +53,8 @@ if ($existing) {
         $requestedQty
     ]);
     if ($insert->rowCount() === 0) {
-        http_response_code(500);
-        echo json_encode([
-            "status" => 500,
-            "message" => "Failed to insert cart item"
-        ]);
-        exit;
+        sendResponse(500, "Failed to insert cart item");
     }
 }
 
-http_response_code(200);
-echo json_encode([
-    "status" => 200,
-    "message" => "Item added to cart successfully"
-]);
+sendResponse(200, "Item added to cart successfully");

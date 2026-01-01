@@ -1,66 +1,94 @@
 <?php
-// Set the content type to JSON
-header("Content-Type: application/json");
 
-// Create a new PDO connection to the MySQL database
-$db_host = 'localhost';
-$db_name = 'ecommerce_db';
-$db_user = 'root';
-$db_pass = '';
+require_once __DIR__ . "/../PHPMailer/Exception.php";
+require_once __DIR__ . "/../PHPMailer/PHPMailer.php";
+require_once __DIR__ . "/../PHPMailer/SMTP.php";
 
-$conn = new PDO(
-    "mysql:host=$db_host;dbname=$db_name",
-    $db_user,
-    $db_pass,
-);
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
 
-// Set PDO to throw exceptions on errors
-$conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-// Function to check if the user is an admin
-function checkAdmin($conn, $user_id)
+/**
+ * Standardized JSON Response
+ */
+function sendResponse($status, $message, $data = null)
 {
-    // Query to get the role of the user
-    $stmt = $conn->prepare("SELECT role FROM users WHERE id=?");
-    $stmt->execute([$user_id]);
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    // If the user does not exist or is not an admin, deny access
-    if (!$user || $user['role'] !== 'admin') {
-        echo json_encode([
-            "status" => 403,
-            "message" => "Access denied (Admin only)"
-        ]);
-        exit;
+    http_response_code($status);
+    $response = [
+        "status" => $status,
+        "message" => $message
+    ];
+    if ($data !== null) {
+        $response['data'] = $data;
     }
+    // Ensure data is null if not provided in success 200/201 (optional, based on previous reqs)
+    // Actually user asked for {status, message} only for errors.
+    // For success, usually {status, message, data}.
+    // If status is error, remove data.
+    if ($status >= 400) {
+        unset($response['data']);
+    } else if ($data === null) {
+         // Should we add data: null for success?
+         // Previous code did: "data" => null.
+         // Let's keep consistency.
+         $response['data'] = null;
+    }
+
+    echo json_encode($response);
+    exit;
 }
 
-// Function to validate tokens for protected endpoints
+/**
+ * Check if the user is an admin (Deprecated - use validateAdminToken)
+ */
+function checkAdmin($conn, $user_id)
+{
+    // This function is deprecated as we now use separate tables.
+    // Logic moved to validateAdminToken
+}
+
+/**
+ * Validate User Token
+ */
 function validateToken($conn, $token)
 {
+    if (!$token) {
+        sendResponse(401, "Token required");
+    }
+
     $stmt = $conn->prepare("SELECT * FROM users WHERE token=?");
     $stmt->execute([$token]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$user) {
-        echo json_encode([
-            "status" => 401,
-            "message" => "Invalid or missing token"
-        ]);
-        exit;
+        sendResponse(401, "Invalid or missing token");
     }
 
     return $user;
 }
 
+/**
+ * Validate Admin Token
+ */
+function validateAdminToken($conn, $token)
+{
+    if (!$token) {
+        sendResponse(401, "Admin Token required");
+    }
 
-require_once __DIR__ . "/PHPMailer/Exception.php";
-require_once __DIR__ . "/PHPMailer/PHPMailer.php";
-require_once __DIR__ . "/PHPMailer/SMTP.php";
+    $stmt = $conn->prepare("SELECT * FROM admins WHERE token=?");
+    $stmt->execute([$token]);
+    $admin = $stmt->fetch(PDO::FETCH_ASSOC);
 
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
+    if (!$admin) {
+        sendResponse(401, "Invalid or missing admin token");
+    }
 
+    return $admin;
+}
+
+/**
+ * Send Verification Email
+ */
 function sendVerificationEmail($email, $code)
 {
     try {
@@ -125,12 +153,6 @@ function sendVerificationEmail($email, $code)
         $mail->send();
 
     } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode([
-            "status" => 500,
-            "message" => "Failed to send verification email"
-        ]);
-        exit;
+        sendResponse(500, "Failed to send verification email");
     }
 }
-
