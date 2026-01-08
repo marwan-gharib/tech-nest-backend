@@ -27,11 +27,16 @@ function sendResponse($status, $message, $data = null)
 }
 
 /* Validate User Token */
-function validateToken($conn, $token)
+function validateToken($conn)
 {
-    if (!$token) {
+    $headers = getallheaders();
+    $authHeader = $headers['Authorization'] ?? null;
+
+    if (!$authHeader) {
         sendResponse(401, "Token required");
     }
+
+    $token = str_replace('Bearer ', '', $authHeader);
 
     $stmt = $conn->prepare("SELECT * FROM users WHERE token=?");
     $stmt->execute([$token]);
@@ -45,11 +50,16 @@ function validateToken($conn, $token)
 }
 
 /* Validate Admin Token */
-function validateAdminToken($conn, $token)
+function validateAdminToken($conn)
 {
-    if (!$token) {
+    $headers = getallheaders();
+    $authHeader = $headers['Authorization'] ?? null;
+
+    if (!$authHeader) {
         sendResponse(401, "Admin Token required");
     }
+
+    $token = str_replace('Bearer ', '', $authHeader);
 
     $stmt = $conn->prepare("SELECT * FROM admins WHERE token=?");
     $stmt->execute([$token]);
