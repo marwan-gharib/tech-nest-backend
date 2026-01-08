@@ -18,11 +18,6 @@ $stmt->execute([$data['email']]);
 $admin = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if ($admin && password_verify($data['password'], $admin['password'])) {
-    
-    if ($admin['token'] !== null) {
-        sendResponse(403, "Admin already logged in");
-    }
-
     $token = bin2hex(random_bytes(25));
     $stmt = $conn->prepare("UPDATE admins SET token=? WHERE id=?");
     $stmt->execute([$token, $admin['id']]);

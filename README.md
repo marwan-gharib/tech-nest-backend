@@ -56,6 +56,14 @@ The project is organized into the following directories:
 #### Verify Email
 **Endpoint**: `POST /api/user/auth/verify_email.php`
 
+#### Validate Token
+**Endpoint**: `POST /api/user/auth/validate_token.php`
+**Description**: Checks if the provided user token is valid.
+**Request**:
+```json
+{ "token": "user_token_here" }
+```
+
 #### Logout
 **Endpoint**: `POST /api/user/auth/logout.php`
 
@@ -67,6 +75,14 @@ The project is organized into the following directories:
 **Request**:
 ```json
 { "email": "admin@example.com", "password": "admin_password" }
+```
+
+#### Validate Admin Token
+**Endpoint**: `POST /api/admin/auth/validate_token.php`
+**Description**: Checks if the provided admin token is valid.
+**Request**:
+```json
+{ "token": "admin_token_here" }
 ```
 
 ---

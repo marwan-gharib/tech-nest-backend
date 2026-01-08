@@ -8,7 +8,9 @@ echo json_encode([
     "structure" => [
         "Admin" => [
             "Auth" => [
-                "Login" => "api/admin/auth/login.php"
+                "Login" => "api/admin/auth/login.php",
+                "Logout" => "api/admin/auth/logout.php",
+                "Validate Token" => "api/admin/auth/validate_token.php"
             ],
             "Products" => [
                 "List" => "api/admin/products/list.php",
@@ -29,6 +31,7 @@ echo json_encode([
                 "Login" => "api/user/auth/login.php",
                 "Social Login" => "api/user/auth/social_login.php",
                 "Verify Email" => "api/user/auth/verify_email.php",
+                "Validate Token" => "api/user/auth/validate_token.php",
                 "Logout" => "api/user/auth/logout.php"
             ],
             "Products" => [
