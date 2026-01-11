@@ -8,7 +8,7 @@ if (!isset($data['quantity']) || !is_numeric($data['quantity']) || $data['quanti
     sendResponse(400, "Quantity must be a positive number");
 }
 
-$user = validateToken($conn, $data['token'] ?? null);
+$user = validateToken($conn);
 
 $productStmt = $conn->prepare(
     "SELECT stock FROM products WHERE id = ? LIMIT 1"

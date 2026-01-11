@@ -17,7 +17,11 @@ if (empty($name) || empty($provider)) {
     sendResponse(400, "Name and provider are required");
 }
 
-$token = bin2hex(random_bytes(25));
+// Include the updated generateTokenWithExpiry function
+require_once '../../../helpers/functions.php';
+
+// Replace token generation logic with generateTokenWithExpiry
+$token = generateTokenWithExpiry($conn, $email, 'users', 7); // 7 days expiration
 
 // Check if the user already exists in the database
 $stmt = $conn->prepare("SELECT * FROM users WHERE email=?");
@@ -40,9 +44,6 @@ if ($user) {
             ->execute([$social_id, $user['id']]);
     }
 
-    $stmt = $conn->prepare("UPDATE users SET token=? WHERE id=?");
-    $stmt->execute([$token, $user['id']]);
-
     sendResponse(200, "User already exists, Login successfully", [
         "id" => $user['id'],
         "name" => $user['name'],
@@ -53,11 +54,12 @@ if ($user) {
 
 // Register a new user if they do not exist
 $stmt = $conn->prepare(
-    "INSERT INTO users (`name`,email,google_id,facebook_id,token,verification_code,is_verified)
-     VALUES (?,?,?,?,?,?,?)"
+    "INSERT INTO users (`name`,email,google_id,facebook_id,token,verification_code,is_verified,token_expiry)
+     VALUES (?,?,?,?,?,?,?,?)"
 );
 
 $verification_code = rand(100000, 999999);
+$token_expiry = date('Y-m-d H:i:s', strtotime('+7 days'));
 
 $stmt->execute([
     $name,
@@ -66,7 +68,8 @@ $stmt->execute([
     $provider == "facebook" ? $social_id : null,
     $token,
     $verification_code,
-    1 // is_verified = 1
+    1, // is_verified = 1
+    $token_expiry
 ]);
 
 $user_id = $conn->lastInsertId();

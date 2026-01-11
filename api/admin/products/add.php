@@ -2,7 +2,7 @@
 include "../../../config/database.php";
 include "../../../helpers/functions.php";
 
-$admin = validateAdminToken($conn, $_POST['token'] ?? null);
+$admin = validateAdminToken($conn);
 
 if (
     empty($_POST['name']) ||
@@ -25,7 +25,7 @@ if (isset($_FILES['image']) && $_FILES['image']['error'] === 0) {
     }
 
     $ext = strtolower(pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION));
-    $allowed = ['jpg','jpeg','png','webp'];
+    $allowed = ['jpg', 'jpeg', 'png', 'webp'];
     if (!in_array($ext, $allowed)) {
         sendResponse(400, "Invalid image type");
     }

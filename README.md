@@ -158,6 +158,19 @@ Success responses may include a `data` field.
 - **User Endpoints**: Generally for `role: 'user'`, though admins can access read-only user endpoints.
 - **Single Session**: Users cannot log in if they already have an active session (valid token).
 
+### Token Handling Updates
+
+1. **Token in Headers**: All API endpoints now require the token to be passed in the `Authorization` header as a Bearer token. Tokens should no longer be included in the request body, except during login.
+
+2. **Token Expiration**: Tokens now have an expiration time. Upon login, a token is generated with a validity period (e.g., 60 minutes). Expired tokens will be rejected, and users must log in again to obtain a new token.
+
+3. **Affected Endpoints**:
+   - All user and admin endpoints now validate tokens from the `Authorization` header.
+   - Login endpoint remains unchanged and returns the token in the response body.
+
+4. **Error Responses**:
+   - `401 Unauthorized`: Returned if the token is missing, invalid, or expired.
+
 ### File Organization
 - **Config**: `config/database.php` handles PDO connection.
 - **Helpers**: `helpers/functions.php` contains reusable logic for Auth, Email, and Responses.

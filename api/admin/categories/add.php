@@ -4,7 +4,7 @@ include "../../../helpers/functions.php";
 
 $data = json_decode(file_get_contents("php://input"), true);
 
-$admin = validateAdminToken($conn, $data['token'] ?? null);
+$admin = validateAdminToken($conn);
 
 $name = trim($data['name']);
 if ($name === '') {

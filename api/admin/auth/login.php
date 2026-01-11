@@ -18,9 +18,7 @@ $stmt->execute([$data['email']]);
 $admin = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if ($admin && password_verify($data['password'], $admin['password'])) {
-    $token = bin2hex(random_bytes(25));
-    $stmt = $conn->prepare("UPDATE admins SET token=? WHERE id=?");
-    $stmt->execute([$token, $admin['id']]);
+    $token = generateTokenWithExpiry($admin['id'], 2, $conn, 'admins');
 
     sendResponse(200, "Admin login successful", [
         "id" => $admin['id'],

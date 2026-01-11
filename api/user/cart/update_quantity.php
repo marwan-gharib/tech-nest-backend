@@ -8,7 +8,7 @@ if (!isset($data['quantity']) || !is_numeric($data['quantity']) || $data['quanti
     sendResponse(400, "Quantity must be a positive number");
 }
 
-$user = validateToken($conn, $data['token'] ?? null);
+$user = validateToken($conn);
 
 $cartStmt = $conn->prepare(
     "SELECT c.id, p.stock 

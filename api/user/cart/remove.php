@@ -4,7 +4,7 @@ include "../../../helpers/functions.php";
 
 $data = json_decode(file_get_contents("php://input"), true);
 
-$user = validateToken($conn, $data['token'] ?? null);
+$user = validateToken($conn);
 
 $stmt = $conn->prepare(
     "DELETE FROM cart WHERE id = ? AND user_id = ?"
@@ -18,7 +18,6 @@ try {
     }
 
     sendResponse(200, "Item removed from cart successfully");
-
 } catch (Exception $e) {
     sendResponse(500, "Failed to remove item from cart");
 }

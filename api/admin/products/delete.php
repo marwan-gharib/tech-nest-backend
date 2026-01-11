@@ -4,7 +4,7 @@ include "../../../helpers/functions.php";
 
 $data = json_decode(file_get_contents("php://input"), true);
 
-$admin = validateAdminToken($conn, $data['token'] ?? null);
+$admin = validateAdminToken($conn);
 
 if (empty($data['id'])) {
     sendResponse(400, "Product id is required");
@@ -29,7 +29,6 @@ try {
     }
 
     sendResponse(200, "Product deleted successfully");
-
 } catch (Exception $e) {
     sendResponse(500, "Failed to delete product");
 }

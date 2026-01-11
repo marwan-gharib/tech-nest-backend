@@ -4,7 +4,7 @@ include "../../../helpers/functions.php";
 
 $data = json_decode(file_get_contents("php://input"), true);
 
-$admin = validateAdminToken($conn, $data['token'] ?? null);
+$admin = validateAdminToken($conn);
 
 if (empty($data['name'])) {
     sendResponse(400, "Category name is required");
@@ -27,7 +27,6 @@ try {
     $stmt->execute([$name, $category_id]);
 
     sendResponse(200, "Category updated successfully");
-
 } catch (Exception $e) {
     sendResponse(500, "Failed to update category");
 }

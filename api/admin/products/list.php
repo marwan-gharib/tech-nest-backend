@@ -4,6 +4,8 @@ include "../../../helpers/functions.php";
 
 $data = json_decode(file_get_contents("php://input"), true);
 
+$admin = validateAdminToken($conn);
+
 try {
     if (isset($data['category_id'])) {
 
@@ -18,7 +20,6 @@ try {
             "SELECT * FROM products WHERE category_id = ?"
         );
         $stmt->execute([$data['category_id']]);
-
     } else {
         $stmt = $conn->prepare("SELECT * FROM products");
         $stmt->execute();

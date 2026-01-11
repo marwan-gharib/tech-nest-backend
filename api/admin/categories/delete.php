@@ -4,7 +4,7 @@ include "../../../helpers/functions.php";
 
 $data = json_decode(file_get_contents("php://input"), true);
 
-$admin = validateAdminToken($conn, $data['token'] ?? null);
+$admin = validateAdminToken($conn);
 
 $stmt = $conn->prepare("DELETE FROM categories WHERE id=?");
 try {
@@ -15,7 +15,6 @@ try {
     }
 
     sendResponse(200, "Category deleted successfully");
-
 } catch (Exception $e) {
     sendResponse(500, "Failed to delete category");
 }

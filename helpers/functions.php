@@ -38,12 +38,12 @@ function validateToken($conn)
 
     $token = str_replace('Bearer ', '', $authHeader);
 
-    $stmt = $conn->prepare("SELECT * FROM users WHERE token=?");
+    $stmt = $conn->prepare("SELECT * FROM users WHERE token = ? AND token_expiry > NOW()");
     $stmt->execute([$token]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$user) {
-        sendResponse(401, "Invalid or missing token");
+        sendResponse(401, "Invalid or expired token");
     }
 
     return $user;
@@ -61,12 +61,12 @@ function validateAdminToken($conn)
 
     $token = str_replace('Bearer ', '', $authHeader);
 
-    $stmt = $conn->prepare("SELECT * FROM admins WHERE token=?");
+    $stmt = $conn->prepare("SELECT * FROM admins WHERE token = ? AND token_expiry > NOW()");
     $stmt->execute([$token]);
     $admin = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$admin) {
-        sendResponse(401, "Invalid or missing admin token");
+        sendResponse(401, "Invalid or expired admin token");
     }
 
     return $admin;
@@ -129,8 +129,17 @@ function sendVerificationEmail($email, $code)
         $mail->AltBody = "Your verification code is: $code (Valid for 5 minutes)";
 
         $mail->send();
-
     } catch (Exception $e) {
         sendResponse(500, "Failed to send verification email");
     }
+}
+
+function generateTokenWithExpiry($id, $expiryDays, $conn, $table = 'users') {
+    $token = bin2hex(random_bytes(25));
+    $expiryTime = date('Y-m-d H:i:s', strtotime("+$expiryDays days"));
+
+    $stmt = $conn->prepare("UPDATE $table SET token = ?, token_expiry = ? WHERE id = ?");
+    $stmt->execute([$token, $expiryTime, $id]);
+
+    return $token;
 }

@@ -2,12 +2,10 @@
 include "../../../config/database.php";
 include "../../../helpers/functions.php";
 
-$data = json_decode(file_get_contents("php://input"), true);
-
-$user = validateToken($conn, $data['token'] ?? null);
+$user = validateToken($conn);
 
 try {
-    $stmt = $conn->prepare("UPDATE users SET token = NULL WHERE id = ?");
+    $stmt = $conn->prepare("UPDATE users SET token = NULL, token_expiry = NULL WHERE id = ?");
     $stmt->execute([$user['id']]);
 
     sendResponse(200, "Logout successful");

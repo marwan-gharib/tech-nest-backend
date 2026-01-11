@@ -2,9 +2,7 @@
 include "../../../config/database.php";
 include "../../../helpers/functions.php";
 
-$data = json_decode(file_get_contents("php://input"), true);
-
-$user = validateToken($conn, $data['token'] ?? null);
+$user = validateToken($conn);
 
 $stmt = $conn->prepare("SELECT * FROM cart WHERE user_id=?");
 $stmt->execute([$user['id']]);
