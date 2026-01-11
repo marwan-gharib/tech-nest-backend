@@ -21,7 +21,7 @@ if (!$user) {
 
 $token = generateTokenWithExpiry($user['id'], 7, $conn);
 
-$stmt = $conn->prepare("UPDATE users SET is_verified=1, verification_code=0, code_expires_at=NULL, token=? WHERE email=?");
+$stmt = $conn->prepare("UPDATE users SET is_verified=1, verification_code=NULL, code_expires_at=NULL, token=? WHERE email=?");
 $stmt->execute([$token, $data['email']]);
 
 sendResponse(200, "Email verified successfully.", [

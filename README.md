@@ -1,176 +1,525 @@
-# E-Commerce Backend API Documentation
+# E-commerce Backend API
 
-This document provides detailed information about the endpoints available in the E-Commerce Backend API, which has been restructured to follow the Single Responsibility Principle and Clean Architecture. The API is divided into Admin and User namespaces to ensure separation of concerns.
+Welcome to the **E-commerce Backend API**! This project serves as the backend for an e-commerce platform, providing endpoints for user and admin authentication, product and category management, and cart operations. The API is built using PHP and follows a modular structure for scalability and maintainability.
+
+---
 
 ## Table of Contents
-1. [Project Structure](#project-structure)
-2. [Authentication](#authentication)
-   - [User Authentication](#user-authentication)
-   - [Admin Authentication](#admin-authentication)
-3. [User Endpoints](#user-endpoints)
-   - [Products (List)](#user-products)
-   - [Categories (List)](#user-categories)
-   - [Cart Operations](#user-cart)
-4. [Admin Endpoints](#admin-endpoints)
-   - [Products (CRUD)](#admin-products)
-   - [Categories (CRUD)](#admin-categories)
-5. [Conventions & Policies](#conventions--policies)
+- [Features](#features)
+- [Folder Structure](#folder-structure)
+- [Endpoints](#endpoints)
+  - [Admin Endpoints](#admin-endpoints)
+  - [User Endpoints](#user-endpoints)
+- [Setup Instructions](#setup-instructions)
+- [Technologies Used](#technologies-used)
+- [Contributing](#contributing)
+- [License](#license)
 
 ---
 
-## Project Structure
-
-The project is organized into the following directories:
-
-- `api/admin`: Contains all endpoints specific to administrators (Product management, Category management, Admin Auth).
-- `api/user`: Contains all endpoints specific to users (Shopping, Cart, User Auth).
-- `config`: Configuration files (Database connection).
-- `helpers`: Helper functions (Email, Validation, Response formatting).
-- `uploads`: Stores product images.
+## Features
+- **Authentication**: Secure login and token-based authentication for both users and admins.
+- **Token Expiry**: Tokens are generated with expiration times (7 days for users, 2 days for admins).
+- **Product Management**: Add, update, delete, and list products.
+- **Category Management**: Add, update, delete, and list categories.
+- **Cart Operations**: Add, update, remove, and list items in the cart.
+- **Social Login**: Support for Google and Facebook login.
 
 ---
 
-## Authentication
-
-### User Authentication
-
-#### Register
-**Endpoint**: `POST /api/user/auth/register.php`
-**Description**: Registers a new user and sends a 6-digit verification code.
-**Request**:
-```json
-{ "name": "User", "email": "user@example.com", "password": "password" }
+## Folder Structure
 ```
-
-#### Login
-**Endpoint**: `POST /api/user/auth/login.php`
-**Description**: Logs in a regular user.
-**Request**:
-```json
-{ "email": "user@example.com", "password": "password" }
-```
-
-#### Social Login
-**Endpoint**: `POST /api/user/auth/social_login.php`
-
-#### Verify Email
-**Endpoint**: `POST /api/user/auth/verify_email.php`
-
-#### Validate Token
-**Endpoint**: `POST /api/user/auth/validate_token.php`
-**Description**: Checks if the provided user token is valid.
-**Request**:
-```json
-{ "token": "user_token_here" }
-```
-
-#### Logout
-**Endpoint**: `POST /api/user/auth/logout.php`
-
-### Admin Authentication
-
-#### Admin Login
-**Endpoint**: `POST /api/admin/auth/login.php`
-**Description**: Dedicated login for administrators. Enforces role verification.
-**Request**:
-```json
-{ "email": "admin@example.com", "password": "admin_password" }
-```
-
-#### Validate Admin Token
-**Endpoint**: `POST /api/admin/auth/validate_token.php`
-**Description**: Checks if the provided admin token is valid.
-**Request**:
-```json
-{ "token": "admin_token_here" }
+api/
+  admin/
+    auth/
+      login.php
+      logout.php
+      validate_token.php
+    categories/
+      add.php
+      delete.php
+      list.php
+      update.php
+    products/
+      add.php
+      delete.php
+      list.php
+      update.php
+  user/
+    auth/
+      login.php
+      logout.php
+      register.php
+      social_login.php
+      validate_token.php
+      verify_email.php
+    cart/
+      add.php
+      list.php
+      remove.php
+      update_quantity.php
+    categories/
+      list.php
+    products/
+      list.php
+config/
+  database.php
+helpers/
+  functions.php
+uploads/
 ```
 
 ---
 
-## User Endpoints
+## Endpoints
 
-### Products (List)
-**Endpoint**: `GET /api/user/products/list.php`
-**Description**: Publicly accessible list of products.
+### Admin Endpoints
 
-### Categories (List)
-**Endpoint**: `GET /api/user/categories/list.php`
-**Description**: Publicly accessible list of categories.
+#### Authentication
+- **Login**: `POST /api/admin/auth/login.php`
+  - **Description**: Authenticates an admin user and generates a token with a 2-day expiration.
+  - **Request Body**:
+    ```json
+    {
+      "email": "admin@example.com",
+      "password": "password123"
+    }
+    ```
+  - **Response**:
+    ```json
+    {
+      "status": 200,
+      "message": "Login successful",
+      "data": {
+        "token": "<admin_token>"
+      }
+    }
+    ```
 
-### Cart Operations
+- **Logout**: `POST /api/admin/auth/logout.php`
+  - **Description**: Logs out the admin user by invalidating the token.
+  - **Headers**:
+    ```json
+    {
+      "Authorization": "Bearer <admin_token>"
+    }
+    ```
+  - **Response**:
+    ```json
+    {
+      "status": 200,
+      "message": "Logout successful"
+    }
+    ```
 
-#### Add to Cart
-**Endpoint**: `POST /api/user/cart/add.php`
-**Request**:
-```json
-{ "token": "user_token", "product_id": 1, "quantity": 1 }
-```
+- **Validate Token**: `GET /api/admin/auth/validate_token.php`
+  - **Description**: Validates the admin token to ensure it is still active.
+  - **Headers**:
+    ```json
+    {
+      "Authorization": "Bearer <admin_token>"
+    }
+    ```
+  - **Response**:
+    ```json
+    {
+      "status": 200,
+      "message": "Token is valid"
+    }
+    ```
 
-#### List Cart
-**Endpoint**: `GET /api/user/cart/list.php`
-**Request**:
-```json
-{ "token": "user_token" }
-```
+#### Categories
+- **Add Category**: `POST /api/admin/categories/add.php`
+  - **Description**: Adds a new category to the database.
+  - **Request Body**:
+    ```json
+    {
+      "name": "Electronics"
+    }
+    ```
+  - **Response**:
+    ```json
+    {
+      "status": 201,
+      "message": "Category added successfully"
+    }
+    ```
 
-#### Update Quantity
-**Endpoint**: `POST /api/user/cart/update_quantity.php`
+- **Delete Category**: `DELETE /api/admin/categories/delete.php`
+  - **Description**: Deletes a category by its ID.
+  - **Request Body**:
+    ```json
+    {
+      "id": 1
+    }
+    ```
+  - **Response**:
+    ```json
+    {
+      "status": 200,
+      "message": "Category deleted successfully"
+    }
+    ```
 
-#### Remove Item
-**Endpoint**: `POST /api/user/cart/remove.php`
+- **List Categories**: `GET /api/admin/categories/list.php`
+  - **Description**: Retrieves a list of all categories.
+  - **Response**:
+    ```json
+    {
+      "status": 200,
+      "message": "Categories retrieved successfully",
+      "data": [
+        {
+          "id": 1,
+          "name": "Electronics"
+        }
+      ]
+    }
+    ```
+
+- **Update Category**: `PUT /api/admin/categories/update.php`
+  - **Description**: Updates the name of an existing category.
+  - **Request Body**:
+    ```json
+    {
+      "id": 1,
+      "name": "Updated Category Name"
+    }
+    ```
+  - **Response**:
+    ```json
+    {
+      "status": 200,
+      "message": "Category updated successfully"
+    }
+    ```
+
+#### Products
+- **Add Product**: `POST /api/admin/products/add.php`
+  - **Description**: Adds a new product to the database.
+  - **Request Body**:
+    ```json
+    {
+      "name": "Smartphone",
+      "price": 299.99,
+      "category_id": 1,
+      "description": "Latest model smartphone",
+      "image": "path/to/image.jpg"
+    }
+    ```
+  - **Response**:
+    ```json
+    {
+      "status": 201,
+      "message": "Product added successfully"
+    }
+    ```
+
+- **Delete Product**: `DELETE /api/admin/products/delete.php`
+  - **Description**: Deletes a product by its ID.
+  - **Request Body**:
+    ```json
+    {
+      "id": 1
+    }
+    ```
+  - **Response**:
+    ```json
+    {
+      "status": 200,
+      "message": "Product deleted successfully"
+    }
+    ```
+
+- **List Products**: `GET /api/admin/products/list.php`
+  - **Description**: Retrieves a list of all products.
+  - **Response**:
+    ```json
+    {
+      "status": 200,
+      "message": "Products retrieved successfully",
+      "data": [
+        {
+          "id": 1,
+          "name": "Smartphone",
+          "price": 299.99,
+          "category_id": 1,
+          "description": "Latest model smartphone",
+          "image": "path/to/image.jpg"
+        }
+      ]
+    }
+    ```
+
+- **Update Product**: `PUT /api/admin/products/update.php`
+  - **Description**: Updates the details of an existing product.
+  - **Request Body**:
+    ```json
+    {
+      "id": 1,
+      "name": "Updated Smartphone",
+      "price": 249.99,
+      "category_id": 1,
+      "description": "Updated description",
+      "image": "path/to/new_image.jpg"
+    }
+    ```
+  - **Response**:
+    ```json
+    {
+      "status": 200,
+      "message": "Product updated successfully"
+    }
+    ```
+
+### User Endpoints
+
+#### Authentication
+- **Register**: `POST /api/user/auth/register.php`
+  - **Description**: Registers a new user and sends a verification email.
+  - **Request Body**:
+    ```json
+    {
+      "name": "John Doe",
+      "email": "john@example.com",
+      "password": "password123"
+    }
+    ```
+  - **Response**:
+    ```json
+    {
+      "status": 201,
+      "message": "Registration successful, please check your email to verify your account"
+    }
+    ```
+
+- **Login**: `POST /api/user/auth/login.php`
+  - **Description**: Authenticates a user and generates a token with a 7-day expiration.
+  - **Request Body**:
+    ```json
+    {
+      "email": "john@example.com",
+      "password": "password123"
+    }
+    ```
+  - **Response**:
+    ```json
+    {
+      "status": 200,
+      "message": "Login successful",
+      "data": {
+        "token": "<user_token>"
+      }
+    }
+    ```
+
+- **Logout**: `POST /api/user/auth/logout.php`
+  - **Description**: Logs out the user by invalidating the token.
+  - **Headers**:
+    ```json
+    {
+      "Authorization": "Bearer <user_token>"
+    }
+    ```
+  - **Response**:
+    ```json
+    {
+      "status": 200,
+      "message": "Logout successful"
+    }
+    ```
+
+- **Social Login**: `POST /api/user/auth/social_login.php`
+  - **Description**: Authenticates a user via social media (Google, Facebook).
+  - **Request Body**:
+    ```json
+    {
+      "provider": "google",
+      "token": "<social_token>"
+    }
+    ```
+  - **Response**:
+    ```json
+    {
+      "status": 200,
+      "message": "Social login successful",
+      "data": {
+        "token": "<user_token>"
+      }
+    }
+    ```
+
+- **Validate Token**: `GET /api/user/auth/validate_token.php`
+  - **Description**: Validates the user token to ensure it is still active.
+  - **Headers**:
+    ```json
+    {
+      "Authorization": "Bearer <user_token>"
+    }
+    ```
+  - **Response**:
+    ```json
+    {
+      "status": 200,
+      "message": "Token is valid"
+    }
+    ```
+
+- **Verify Email**: `POST /api/user/auth/verify_email.php`
+  - **Description**: Verifies the user's email address.
+  - **Request Body**:
+    ```json
+    {
+      "token": "<verification_token>"
+    }
+    ```
+  - **Response**:
+    ```json
+    {
+      "status": 200,
+      "message": "Email verified successfully"
+    }
+    ```
+
+#### Categories
+- **List Categories**: `GET /api/user/categories/list.php`
+  - **Description**: Retrieves a list of all categories.
+  - **Response**:
+    ```json
+    {
+      "status": 200,
+      "message": "Categories retrieved successfully",
+      "data": [
+        {
+          "id": 1,
+          "name": "Electronics"
+        }
+      ]
+    }
+    ```
+
+#### Products
+- **List Products**: `GET /api/user/products/list.php`
+  - **Description**: Retrieves a list of all products.
+  - **Response**:
+    ```json
+    {
+      "status": 200,
+      "message": "Products retrieved successfully",
+      "data": [
+        {
+          "id": 1,
+          "name": "Smartphone",
+          "price": 299.99,
+          "category_id": 1,
+          "description": "Latest model smartphone",
+          "image": "path/to/image.jpg"
+        }
+      ]
+    }
+    ```
+
+#### Cart
+- **Add to Cart**: `POST /api/user/cart/add.php`
+  - **Description**: Adds a product to the user's cart.
+  - **Request Body**:
+    ```json
+    {
+      "product_id": 1,
+      "quantity": 2
+    }
+    ```
+  - **Response**:
+    ```json
+    {
+      "status": 201,
+      "message": "Product added to cart"
+    }
+    ```
+
+- **List Cart Items**: `GET /api/user/cart/list.php`
+  - **Description**: Retrieves the items in the user's cart.
+  - **Response**:
+    ```json
+    {
+      "status": 200,
+      "message": "Cart items retrieved successfully",
+      "data": [
+        {
+          "id": 1,
+          "product_id": 1,
+          "quantity": 2
+        }
+      ]
+    }
+    ```
+
+- **Remove from Cart**: `DELETE /api/user/cart/remove.php`
+  - **Description**: Removes an item from the user's cart.
+  - **Request Body**:
+    ```json
+    {
+      "id": 1
+    }
+    ```
+  - **Response**:
+    ```json
+    {
+      "status": 200,
+      "message": "Item removed from cart"
+    }
+    ```
+
+- **Update Cart Quantity**: `PUT /api/user/cart/update_quantity.php`
+  - **Description**: Updates the quantity of an item in the user's cart.
+  - **Request Body**:
+    ```json
+    {
+      "id": 1,
+      "quantity": 3
+    }
+    ```
+  - **Response**:
+    ```json
+    {
+      "status": 200,
+      "message": "Cart quantity updated"
+    }
+    ```
 
 ---
 
-## Admin Endpoints
+## Setup Instructions
 
-### Products (CRUD)
-Requires Admin Token.
-
-- **List**: `GET /api/admin/products/list.php`
-- **Add**: `POST /api/admin/products/add.php`
-- **Update**: `POST /api/admin/products/update.php`
-- **Delete**: `POST /api/admin/products/delete.php`
-
-### Categories (CRUD)
-Requires Admin Token.
-
-- **List**: `GET /api/admin/categories/list.php`
-- **Add**: `POST /api/admin/categories/add.php`
-- **Update**: `POST /api/admin/categories/update.php`
-- **Delete**: `POST /api/admin/categories/delete.php`
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-username/e-commerce-backend-php.git
+   ```
+2. Navigate to the project directory:
+   ```bash
+   cd e-commerce-backend-php
+   ```
+3. Set up the database:
+   - Import the `ecommerce_db.sql` file into your MySQL database.
+   - Update the database credentials in `config/database.php`.
+4. Start the server:
+   - Use XAMPP or any PHP server to host the project.
+5. Test the endpoints using tools like Postman or cURL.
 
 ---
 
-## Conventions & Policies
+## Technologies Used
+- **Backend**: PHP
+- **Database**: MySQL
+- **Authentication**: Token-based (JWT-like custom implementation)
+- **Libraries**: PHPMailer for email verification
 
-### Error Handling
-Error responses are standardized to exclude sensitive debug data:
-```json
-{
-  "status": 4xx/5xx,
-  "message": "Error description"
-}
-```
-Success responses may include a `data` field.
+---
 
-### Authorization
-- **Admin Endpoints**: Strictly require a user with `role: 'admin'`.
-- **User Endpoints**: Generally for `role: 'user'`, though admins can access read-only user endpoints.
-- **Single Session**: Users cannot log in if they already have an active session (valid token).
+## Contributing
+Contributions are welcome! Please fork the repository and submit a pull request.
 
-### Token Handling Updates
+---
 
-1. **Token in Headers**: All API endpoints now require the token to be passed in the `Authorization` header as a Bearer token. Tokens should no longer be included in the request body, except during login.
-
-2. **Token Expiration**: Tokens now have an expiration time. Upon login, a token is generated with a validity period (e.g., 60 minutes). Expired tokens will be rejected, and users must log in again to obtain a new token.
-
-3. **Affected Endpoints**:
-   - All user and admin endpoints now validate tokens from the `Authorization` header.
-   - Login endpoint remains unchanged and returns the token in the response body.
-
-4. **Error Responses**:
-   - `401 Unauthorized`: Returned if the token is missing, invalid, or expired.
-
-### File Organization
-- **Config**: `config/database.php` handles PDO connection.
-- **Helpers**: `helpers/functions.php` contains reusable logic for Auth, Email, and Responses.
+## License
+This project is licensed under the MIT License. See the LICENSE file for details.

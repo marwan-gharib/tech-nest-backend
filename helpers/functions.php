@@ -30,7 +30,7 @@ function sendResponse($status, $message, $data = null)
 function validateToken($conn)
 {
     $headers = getallheaders();
-    $authHeader = $headers['Authorization'] ?? null;
+    $authHeader = $headers['token'] ?? null;
 
     if (!$authHeader) {
         sendResponse(401, "Token required");
@@ -53,7 +53,7 @@ function validateToken($conn)
 function validateAdminToken($conn)
 {
     $headers = getallheaders();
-    $authHeader = $headers['Authorization'] ?? null;
+    $authHeader = $headers['token'] ?? null;
 
     if (!$authHeader) {
         sendResponse(401, "Admin Token required");
@@ -134,7 +134,8 @@ function sendVerificationEmail($email, $code)
     }
 }
 
-function generateTokenWithExpiry($id, $expiryDays, $conn, $table = 'users') {
+function generateTokenWithExpiry($id, $expiryDays, $conn, $table = 'users')
+{
     $token = bin2hex(random_bytes(25));
     $expiryTime = date('Y-m-d H:i:s', strtotime("+$expiryDays days"));
 
