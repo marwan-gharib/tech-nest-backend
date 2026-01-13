@@ -65,21 +65,22 @@ try {
 
         sendResponse(200, "Product already exists. Stock increased.");
     } else {
-        $stmt = $conn->prepare(
-            "INSERT INTO products (name, description, price, stock, category_id, image_url)
-             VALUES (?, ?, ?, ?, ?, ?)"
-        );
-
-        $stmt->execute([
-            $name,
-            $description,
-            $price,
-            $stock,
-            $category_id,
-            $image_path
-        ]);
-
-        sendResponse(201, "Product added successfully");
+        $stmt = $conn->prepare("INSERT INTO products (name, description, price, stock, category_id, image_url) VALUES (?, ?, ?, ?, ?, ?)");
+        try {
+            $stmt->execute([$name, $description, $price, $stock, $category_id, $image_path]);
+            $product_id = $conn->lastInsertId();
+            sendResponse(201, "Product added successfully", [
+                "id" => $product_id,
+                "name" => $name,
+                "description" => $description,
+                "price" => $price,
+                "stock" => $stock,
+                "category_id" => $category_id,
+                "image_url" => $image_path
+            ]);
+        } catch (Exception $e) {
+            sendResponse(500, "Failed to add product");
+        }
     }
 } catch (Exception $e) {
     sendResponse(500, "Failed to add product");

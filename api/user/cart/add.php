@@ -39,22 +39,22 @@ if ($existing) {
         "UPDATE cart SET quantity = ? WHERE id = ?"
     );
     $update->execute([$totalQty, $existing['id']]);
-    if ($update->rowCount() === 0) {
-        sendResponse(500, "Failed to update cart item");
-    }
+
+    sendResponse(200, "Cart updated successfully", [
+        "id" => $existing['id'],
+        "product_id" => $data['product_id'],
+        "quantity" => $totalQty
+    ]);
 } else {
     $insert = $conn->prepare(
-        "INSERT INTO cart (user_id, product_id, quantity)
-         VALUES (?, ?, ?)"
+        "INSERT INTO cart (user_id, product_id, quantity) VALUES (?, ?, ?)"
     );
-    $insert->execute([
-        $user['id'],
-        $data['product_id'],
-        $requestedQty
-    ]);
-    if ($insert->rowCount() === 0) {
-        sendResponse(500, "Failed to insert cart item");
-    }
-}
+    $insert->execute([$user['id'], $data['product_id'], $requestedQty]);
+    $cart_id = $conn->lastInsertId();
 
-sendResponse(200, "Item added to cart successfully");
+    sendResponse(201, "Item added to cart", [
+        "id" => $cart_id,
+        "product_id" => $data['product_id'],
+        "quantity" => $requestedQty
+    ]);
+}

@@ -26,7 +26,7 @@ try {
     );
     $stmt->execute([$name, $category_id]);
 
-    sendResponse(200, "Category updated successfully");
+    sendResponse(200, "Category updated successfully", ["id" => $category_id, "name" => $name]);
 } catch (Exception $e) {
     sendResponse(500, "Failed to update category");
 }

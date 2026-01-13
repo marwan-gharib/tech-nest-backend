@@ -48,11 +48,7 @@ if (isset($_FILES['image']) && $_FILES['image']['error'] === 0) {
 }
 
 try {
-    $stmt = $conn->prepare(
-        "UPDATE products
-         SET name=?, description=?, price=?, stock=?, image_url=?
-         WHERE id=?"
-    );
+    $stmt = $conn->prepare("UPDATE products SET name = ?, description = ?, price = ?, stock = ?, image_url = ? WHERE id = ?");
     $stmt->execute([
         $_POST['name'],
         $_POST['description'],
@@ -62,7 +58,14 @@ try {
         $_POST['id']
     ]);
 
-    sendResponse(200, "Product updated successfully");
+    sendResponse(200, "Product updated successfully", [
+        "id" => $_POST['id'],
+        "name" => $_POST['name'],
+        "description" => $_POST['description'],
+        "price" => $_POST['price'],
+        "stock" => $_POST['stock'],
+        "image_url" => $image_path
+    ]);
 } catch (Exception $e) {
     sendResponse(500, "Failed to update product");
 }

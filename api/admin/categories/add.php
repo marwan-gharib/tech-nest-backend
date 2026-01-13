@@ -20,7 +20,8 @@ if ($dup->fetch(PDO::FETCH_ASSOC)) {
 $stmt = $conn->prepare("INSERT INTO categories (`name`) VALUES (?)");
 try {
     $stmt->execute([$name]);
-    sendResponse(201, "Category added successfully");
+    $category_id = $conn->lastInsertId();
+    sendResponse(201, "Category added successfully", ["id" => $category_id, "name" => $name]);
 } catch (Exception $e) {
     sendResponse(500, "Failed to add category");
 }

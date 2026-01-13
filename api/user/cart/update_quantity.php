@@ -32,7 +32,10 @@ try {
     $update = $conn->prepare("UPDATE cart SET quantity = ? WHERE id = ?");
     $update->execute([$data['quantity'], $data['id']]);
 
-    sendResponse(200, "Cart updated successfully");
+    sendResponse(200, "Cart updated successfully", [
+        "id" => $data['id'],
+        "quantity" => $data['quantity']
+    ]);
 } catch (Exception $e) {
     sendResponse(500, "Failed to update cart");
 }
