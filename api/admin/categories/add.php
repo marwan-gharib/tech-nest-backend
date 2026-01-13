@@ -21,7 +21,7 @@ $stmt = $conn->prepare("INSERT INTO categories (`name`) VALUES (?)");
 try {
     $stmt->execute([$name]);
     $category_id = $conn->lastInsertId();
-    sendResponse(201, "Category added successfully", ["id" => $category_id, "name" => $name]);
+    sendResponse(201, "Category added successfully", ["id" => (int)$category_id, "name" => $name]);
 } catch (Exception $e) {
     sendResponse(500, "Failed to add category");
 }
