@@ -6,12 +6,25 @@ $data = json_decode(file_get_contents("php://input"), true);
 
 $admin = validateAdminToken($conn);
 
-$stmt = $conn->prepare("DELETE FROM categories WHERE id=?");
-try {
-    $stmt->execute([$data['id']]);
+$stmt = $conn->prepare("SELECT image_url FROM categories WHERE id = ? LIMIT 1");
+if (!isset($data['id']) || empty($data['id'])) {
+    sendResponse(400, "Category id is required");
+}
+$stmt->execute([$data['id']]);
+$imagePath = $stmt->fetchColumn();
 
-    if ($stmt->rowCount() === 0) {
+$delete = $conn->prepare("DELETE FROM categories WHERE id=?");
+try {
+    $delete->execute([$data['id']]);
+
+    if ($delete->rowCount() === 0) {
         sendResponse(404, "Category not found");
+    }
+
+    $fullPath = "../../../" . $imagePath;
+
+    if ($imagePath && file_exists($fullPath)) {
+        unlink($fullPath);
     }
 
     sendResponse(200, "Category deleted successfully");

@@ -70,7 +70,7 @@ try {
             $stmt->execute([$name, $description, $price, $stock, $category_id, $image_path]);
             $product_id = $conn->lastInsertId();
             sendResponse(201, "Product added successfully", [
-                "id" => $product_id,
+                "id" => (int)$product_id,
                 "name" => $name,
                 "description" => $description,
                 "price" => $price,
