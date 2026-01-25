@@ -38,7 +38,7 @@ if (isset($_FILES['image']) && $_FILES['image']['error'] === 0) {
 
 $name = trim($_POST['name']);
 
-$dup = $conn->prepare("SELECT id FROM categories WHERE LOWER(name) = LOWER(?) LIMIT 1");
+$dup = $conn->prepare("SELECT id FROM categories WHERE LOWER(`name`) = LOWER(?) LIMIT 1");
 $dup->execute([$name]);
 if ($dup->fetch(PDO::FETCH_ASSOC)) {
     sendResponse(409, "Category already exists");

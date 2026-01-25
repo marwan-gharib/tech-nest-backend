@@ -65,7 +65,7 @@ try {
 
         sendResponse(200, "Product already exists. Stock increased.");
     } else {
-        $stmt = $conn->prepare("INSERT INTO products (name, description, price, stock, category_id, image_url) VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt = $conn->prepare("INSERT INTO products (`name`, `description`, `price`, `stock`, `category_id`, `image_url`) VALUES (?, ?, ?, ?, ?, ?)");
         try {
             $stmt->execute([$name, $description, $price, $stock, $category_id, $image_path]);
             $product_id = $conn->lastInsertId();

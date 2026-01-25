@@ -22,10 +22,11 @@ try {
         sendResponse(404, "Product not found");
     }
 
-    $fullPath = "../../../" . $imagePath;
-
-    if ($imagePath && file_exists($fullPath)) {
-        unlink($fullPath);
+    if ($imagePath && !isImageUsed($conn, $imagePath)) {
+        $fullPath = "../../../" . $imagePath;
+        if (file_exists($fullPath)) {
+            unlink($fullPath);
+        }
     }
 
     sendResponse(200, "Product deleted successfully");

@@ -144,3 +144,16 @@ function generateTokenWithExpiry($id, $expiryDays, $conn, $table = 'users')
 
     return $token;
 }
+
+function isImageUsed($conn, $imagePath)
+{
+    $stmt = $conn->prepare("SELECT id FROM products WHERE image_url = ? LIMIT 1");
+    $stmt->execute([$imagePath]);
+    if ($stmt->fetch()) return true;
+
+    $stmt = $conn->prepare("SELECT id FROM categories WHERE image_url = ? LIMIT 1");
+    $stmt->execute([$imagePath]);
+    if ($stmt->fetch()) return true;
+
+    return false;
+}

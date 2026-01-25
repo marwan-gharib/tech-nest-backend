@@ -21,10 +21,11 @@ try {
         sendResponse(404, "Category not found");
     }
 
-    $fullPath = "../../../" . $imagePath;
-
-    if ($imagePath && file_exists($fullPath)) {
-        unlink($fullPath);
+    if ($imagePath && !isImageUsed($conn, $imagePath)) {
+        $fullPath = "../../../" . $imagePath;
+        if (file_exists($fullPath)) {
+            unlink($fullPath);
+        }
     }
 
     sendResponse(200, "Category deleted successfully");

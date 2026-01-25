@@ -10,6 +10,12 @@ if (empty($_POST['id']) || empty($_POST['name'])) {
 
 $image_path = null;
 
+$stmt = $conn->prepare("SELECT image_url FROM categories WHERE id=?");
+$stmt->execute([$_POST['id']]);
+$current_image_path = $stmt->fetchColumn();
+
+$image_path = null;
+
 if (isset($_FILES['image']) && $_FILES['image']['error'] === 0) {
     $upload_dir = "../../../uploads/";
     if (!is_dir($upload_dir)) mkdir($upload_dir, 0777, true);
@@ -30,9 +36,7 @@ if (isset($_FILES['image']) && $_FILES['image']['error'] === 0) {
         }
     }
 } else {
-    $stmt = $conn->prepare("SELECT image_url FROM categories WHERE id=?");
-    $stmt->execute([$_POST['id']]);
-    $image_path = $stmt->fetchColumn();
+    $image_path = $current_image_path;
 }
 
 $category_id = intval($_POST['id']);
@@ -46,8 +50,15 @@ if (!$check->fetch(PDO::FETCH_ASSOC)) {
 }
 
 try {
-    $stmt = $conn->prepare("UPDATE categories SET name = ?, image_url = ? WHERE id = ?");
+    $stmt = $conn->prepare("UPDATE categories SET `name` = ?, image_url = ? WHERE id = ?");
     $stmt->execute([$name, $image_path, $category_id]);
+
+    if ($current_image_path && $current_image_path !== $image_path && !isImageUsed($conn, $current_image_path)) {
+        $fullPath = "../../../" . $current_image_path;
+        if (file_exists($fullPath)) {
+            unlink($fullPath);
+        }
+    }
 
     sendResponse(200, "Category updated successfully", ["id" => $category_id, "name" => $name, "image_url" => $image_path]);
 } catch (Exception $e) {

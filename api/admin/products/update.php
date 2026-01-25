@@ -16,6 +16,18 @@ if (
 
 $image_path = null;
 
+$stmt = $conn->prepare("SELECT image_url FROM products WHERE id=?");
+$stmt->execute([$_POST['id']]);
+$row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if (!$row) {
+    sendResponse(404, "Product not found");
+}
+
+$current_image_path = $row['image_url'];
+
+$image_path = null;
+
 if (isset($_FILES['image']) && $_FILES['image']['error'] === 0) {
 
     $upload_dir = "../../../uploads/";
@@ -42,13 +54,11 @@ if (isset($_FILES['image']) && $_FILES['image']['error'] === 0) {
         }
     }
 } else {
-    $stmt = $conn->prepare("SELECT image_url FROM products WHERE id=?");
-    $stmt->execute([$_POST['id']]);
-    $image_path = $stmt->fetchColumn();
+    $image_path = $current_image_path;
 }
 
 try {
-    $stmt = $conn->prepare("UPDATE products SET name = ?, description = ?, price = ?, stock = ?, image_url = ? WHERE id = ?");
+    $stmt = $conn->prepare("UPDATE products SET name = ?, `description` = ?, price = ?, stock = ?, image_url = ? WHERE id = ?");
     $stmt->execute([
         $_POST['name'],
         $_POST['description'],
@@ -58,14 +68,18 @@ try {
         $_POST['id']
     ]);
 
-    sendResponse(200, "Product updated successfully", [
-        "id" => $_POST['id'],
-        "name" => $_POST['name'],
-        "description" => $_POST['description'],
-        "price" => $_POST['price'],
-        "stock" => $_POST['stock'],
-        "image_url" => $image_path
-    ]);
+    if ($current_image_path && $current_image_path !== $image_path && !isImageUsed($conn, $current_image_path)) {
+        $fullPath = "../../../" . $current_image_path;
+        if (file_exists($fullPath)) {
+            unlink($fullPath);
+        }
+    }
+
+    $stmt = $conn->prepare("SELECT * FROM products WHERE id = ?");
+    $stmt->execute([$_POST['id']]);
+    $updatedProduct = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    sendResponse(200, "Product updated successfully", $updatedProduct);
 } catch (Exception $e) {
     sendResponse(500, "Failed to update product");
 }
