@@ -26,7 +26,7 @@ if (!$row) {
 
 $current_image_path = $row['image_url'];
 
-$image_path = null;
+$image_path = $current_image_path;
 
 if (isset($_FILES['image']) && $_FILES['image']['error'] === 0) {
 

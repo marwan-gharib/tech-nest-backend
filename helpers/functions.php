@@ -22,7 +22,17 @@ function sendResponse($status, $message, $data = null)
         unset($response['data']);
     }
 
-    echo json_encode($response);
+    $json = json_encode($response);
+    if ($json === false) {
+        http_response_code(500);
+        echo json_encode([
+            "status" => 500,
+            "message" => "JSON Encoding Error: " . json_last_error_msg()
+        ]);
+        exit;
+    }
+
+    echo $json;
     exit;
 }
 

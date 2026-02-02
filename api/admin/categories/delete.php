@@ -7,7 +7,7 @@ $data = json_decode(file_get_contents("php://input"), true);
 $admin = validateAdminToken($conn);
 
 $stmt = $conn->prepare("SELECT image_url FROM categories WHERE id = ? LIMIT 1");
-if (!isset($data['id']) || empty($data['id'])) {
+if (!$data || !isset($data['id']) || empty($data['id'])) {
     sendResponse(400, "Category id is required");
 }
 $stmt->execute([$data['id']]);

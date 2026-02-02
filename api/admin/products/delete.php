@@ -3,14 +3,13 @@ include "../../../config/database.php";
 include "../../../helpers/functions.php";
 
 $data = json_decode(file_get_contents("php://input"), true);
-
 $admin = validateAdminToken($conn);
 
-if (empty($data['id'])) {
+if (!$data || empty($data['id'])) {
     sendResponse(400, "Product id is required");
 }
 
-$stmt = $conn->prepare("SELECT image_url FROM products WHERE id = ? LIMIT 1");
+$stmt = $conn->prepare("SELECT image_url FROM products WHERE id = ?");
 $stmt->execute([$data['id']]);
 $imagePath = $stmt->fetchColumn();
 
@@ -24,9 +23,7 @@ try {
 
     if ($imagePath && !isImageUsed($conn, $imagePath)) {
         $fullPath = "../../../" . $imagePath;
-        if (file_exists($fullPath)) {
-            unlink($fullPath);
-        }
+        if (file_exists($fullPath)) unlink($fullPath);
     }
 
     sendResponse(200, "Product deleted successfully");
