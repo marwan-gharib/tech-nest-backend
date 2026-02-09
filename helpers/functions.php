@@ -40,7 +40,7 @@ function sendResponse($status, $message, $data = null)
 function validateToken($conn)
 {
     $headers = getallheaders();
-    $authHeader = $headers['token'] ?? null;
+    $authHeader = $headers['Token'] ?? null;
 
     if (!$authHeader) {
         sendResponse(401, "Token required");
@@ -63,7 +63,7 @@ function validateToken($conn)
 function validateAdminToken($conn)
 {
     $headers = getallheaders();
-    $authHeader = $headers['token'] ?? null;
+    $authHeader = $headers['Token'] ?? null;
 
     if (!$authHeader) {
         sendResponse(401, "Admin Token required");
