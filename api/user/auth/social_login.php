@@ -16,6 +16,12 @@ if (!$email || !$provider || !$social_id) {
 if (empty($name) || empty($provider)) {
     sendResponse(400, "Name and provider are required");
 }
+if (!$email || !$provider || !$social_id) {
+    sendResponse(400, "Invalid data", null, ["fields" => "Missing required fields"]);
+}
+if (empty($name) || empty($provider)) {
+    sendResponse(400, "Name and provider are required", null, ["fields" => "Missing required fields"]);
+}
 
 // Include the updated generateTokenWithExpiry function
 require_once '../../../helpers/functions.php';
@@ -43,12 +49,15 @@ if ($user) {
         $conn->prepare("UPDATE users SET facebook_id=? WHERE id=?")
             ->execute([$social_id, $user['id']]);
     }
+    sendResponse(403, "User already logged in", null, ["auth" => "Already logged in"]);
 
     sendResponse(200, "User already exists, Login successfully", [
-        "id" => $user['id'],
-        "name" => $user['name'],
-        "email" => $user['email'],
-        "token" => $token
+        "token" => $token,
+        "user" => [
+            "id" => $user['id'],
+            "name" => $user['name'],
+            "email" => $user['email']
+        ]
     ]);
 }
 
@@ -75,8 +84,10 @@ $stmt->execute([
 $user_id = $conn->lastInsertId();
 
 sendResponse(201, "User registered successfully", [
-    "id" => $user_id,
-    "name" => $name,
-    "email" => $email,
-    "token" => $token
+    "token" => $token,
+    "user" => [
+        "id" => $user_id,
+        "name" => $name,
+        "email" => $email
+    ]
 ]);

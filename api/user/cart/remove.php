@@ -14,10 +14,10 @@ try {
     $stmt->execute([$data['id'], $user['id']]);
 
     if ($stmt->rowCount() === 0) {
-        sendResponse(404, "Item not found in cart");
+        sendResponse(404, "Item not found in cart", null, ["cart_item" => "Not found"]);
     }
 
-    sendResponse(200, "Item removed from cart successfully");
+    sendResponse(200, "Item removed from cart successfully", ["id" => $data['id']]);
 } catch (Exception $e) {
-    sendResponse(500, "Failed to remove item from cart");
+    sendResponse(500, "Failed to remove item from cart", null, ["exception" => $e->getMessage()]);
 }

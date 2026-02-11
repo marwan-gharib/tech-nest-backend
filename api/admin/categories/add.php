@@ -41,7 +41,7 @@ $name = trim($_POST['name']);
 $dup = $conn->prepare("SELECT id FROM categories WHERE LOWER(`name`) = LOWER(?) LIMIT 1");
 $dup->execute([$name]);
 if ($dup->fetch(PDO::FETCH_ASSOC)) {
-    sendResponse(409, "Category already exists");
+    sendResponse(, "Category already exists");
 }
 
 $stmt = $conn->prepare("INSERT INTO categories (`name`, `image_url`) VALUES (?, ?)");

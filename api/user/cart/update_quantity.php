@@ -5,7 +5,7 @@ include "../../../helpers/functions.php";
 $data = json_decode(file_get_contents("php://input"), true);
 
 if (!isset($data['quantity']) || !is_numeric($data['quantity']) || $data['quantity'] <= 0) {
-    sendResponse(400, "Quantity must be a positive number");
+    sendResponse(400, "Quantity must be a positive number", null, ["quantity" => "Must be a positive number"]);
 }
 
 $user = validateToken($conn);
@@ -21,11 +21,11 @@ $cartStmt->execute([$data['id'], $user['id']]);
 $item = $cartStmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$item) {
-    sendResponse(404, "Cart item not found");
+    sendResponse(404, "Cart item not found", null, ["cart_item" => "Not found"]);
 }
 
 if ((int)$data['quantity'] > (int)$item['stock']) {
-    sendResponse(400, "Only {$item['stock']} items available");
+    sendResponse(400, "Only {$item['stock']} items available", null, ["stock" => "Insufficient stock"]);
 }
 
 try {
@@ -37,5 +37,5 @@ try {
         "quantity" => $data['quantity']
     ]);
 } catch (Exception $e) {
-    sendResponse(500, "Failed to update cart");
+    sendResponse(500, "Failed to update cart", null, ["exception" => $e->getMessage()]);
 }

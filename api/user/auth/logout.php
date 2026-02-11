@@ -8,7 +8,7 @@ try {
     $stmt = $conn->prepare("UPDATE users SET token = NULL, token_expiry = NULL WHERE id = ?");
     $stmt->execute([$user['id']]);
 
-    sendResponse(200, "Logout successful");
+    sendResponse(200, "Logout successful", null);
 } catch (Exception $e) {
-    sendResponse(500, "Failed to logout");
+    sendResponse(500, "Failed to logout", null);
 }

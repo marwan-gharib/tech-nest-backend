@@ -16,7 +16,7 @@ $stmt->execute([$data['email'], $data['verification_code']]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$user) {
-    sendResponse(400, "Invalid verification code or email.");
+    sendResponse(400, "Invalid verification code or email.", null, ["verification_code" => "Invalid or expired"]);
 }
 
 $token = generateTokenWithExpiry($user['id'], 7, $conn);
@@ -24,9 +24,14 @@ $token = generateTokenWithExpiry($user['id'], 7, $conn);
 $stmt = $conn->prepare("UPDATE users SET is_verified=1, verification_code=NULL, code_expires_at=NULL, token=? WHERE email=?");
 $stmt->execute([$token, $data['email']]);
 
+$stmt = $conn->prepare("SELECT id, name, email, is_verified FROM users WHERE email=?");
+$stmt->execute([$data['email']]);
+
 sendResponse(200, "Email verified successfully.", [
-    "id" => $user['id'],
-    "name" => $user['name'],
-    "email" => $user['email'],
-    "token" => $token
+    "token" => $token,
+    "user" => [
+        "id" => $user['id'],
+        "name" => $user['name'],
+        "email" => $user['email']
+    ]
 ]);

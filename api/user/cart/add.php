@@ -5,7 +5,7 @@ include "../../../helpers/functions.php";
 $data = json_decode(file_get_contents("php://input"), true);
 
 if (!isset($data['quantity']) || !is_numeric($data['quantity']) || $data['quantity'] <= 0) {
-    sendResponse(400, "Quantity must be a positive number");
+    sendResponse(400, "Quantity must be a positive number", null, ["quantity" => "Must be a positive number"]);
 }
 
 $user = validateToken($conn);
@@ -17,7 +17,7 @@ $productStmt->execute([$data['product_id']]);
 $product = $productStmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$product) {
-    sendResponse(404, "Product not found");
+    sendResponse(404, "Product not found", null, ["product_id" => "Not found"]);
 }
 
 $cartStmt = $conn->prepare(
@@ -31,7 +31,7 @@ $currentQty   = $existing ? (int)$existing['quantity'] : 0;
 $totalQty     = $currentQty + $requestedQty;
 
 if ($totalQty > (int)$product['stock']) {
-    sendResponse(400, "Only {$product['stock']} items available");
+    sendResponse(400, "Only {$product['stock']} items available", null, ["stock" => "Insufficient stock"]);
 }
 
 if ($existing) {

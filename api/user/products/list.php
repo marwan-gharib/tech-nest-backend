@@ -14,7 +14,7 @@ try {
     $check->execute([$data['category_id']]);
 
     if ($check->rowCount() === 0) {
-      sendResponse(404, "Category not found");
+      sendResponse(404, "Category not found", null, ["category_id" => "Not found"]);
     }
 
     $stmt = $conn->prepare("SELECT * FROM products WHERE category_id = ?");
@@ -27,5 +27,5 @@ try {
   $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
   sendResponse(200, "Products retrieved successfully", $products);
 } catch (Exception $e) {
-  sendResponse(500, "Failed to retrieve products");
+  sendResponse(500, "Failed to retrieve products", null, ["exception" => $e->getMessage()]);
 }
