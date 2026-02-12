@@ -7,8 +7,15 @@ $name = isset($_POST['name']) ? trim($_POST['name']) : null;
 $email = isset($_POST['email']) ? trim($_POST['email']) : null;
 $password = isset($_POST['password']) ? $_POST['password'] : null;
 
+if (empty($name) || empty($email) || empty($password)) {
+    sendResponse(400, "All fields are required", null, ["fields" => "Missing required fields"]);
+}
+
+if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    sendResponse(400, "Invalid email format", null, ["email" => "Invalid format"]);
+}
+
 $profile_image_path = null;
-// صورة البروفايل مطلوبة مع فحص كامل
 if (!isset($_FILES['profile_image']) || $_FILES['profile_image']['error'] !== 0) {
     sendResponse(400, "Profile image is required", null, ["profile_image" => "Image is required"]);
 }
@@ -36,14 +43,6 @@ if ($existing && count($existing) > 0) {
     if (!move_uploaded_file($_FILES['profile_image']['tmp_name'], '../../../' . $profile_image_path)) {
         sendResponse(500, "Failed to upload image");
     }
-}
-
-if (empty($name) || empty($email) || empty($password)) {
-    sendResponse(400, "All fields are required", null, ["fields" => "Missing required fields"]);
-}
-
-if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    sendResponse(400, "Invalid email format", null, ["email" => "Invalid format"]);
 }
 
 $stmt = $conn->prepare("SELECT * FROM users WHERE email=?");
