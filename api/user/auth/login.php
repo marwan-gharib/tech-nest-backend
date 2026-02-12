@@ -5,7 +5,7 @@ include "../../../helpers/functions.php";
 $data = json_decode(file_get_contents("php://input"), true);
 
 if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
-    sendResponse(400, "Invalid email format", null, ["email" => "Invalid format"]);
+    sendResponse(400, "Invalid email format");
 }
 
 $stmt = $conn->prepare("SELECT * FROM users WHERE email=?");
@@ -14,7 +14,7 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if ($user && password_verify($data['password'], $user['password'])) {
     if ($user['is_verified'] == 0) {
-        sendResponse(401, "Invalid email or password", null);
+        sendResponse(401, "Invalid email or password");
     }
 
     $token = generateTokenWithExpiry($user['id'], 7, $conn);
@@ -24,9 +24,10 @@ if ($user && password_verify($data['password'], $user['password'])) {
         "user" => [
             "id" => $user['id'],
             "name" => $user['name'],
-            "email" => $user['email']
+            "email" => $user['email'],
+            "image_url" => $user['profile_image'] ?? null
         ]
     ]);
 } else {
-    sendResponse(401, "Invalid email or password", null, ["auth" => "Invalid credentials"]);
+    sendResponse(401, "Invalid email or password");
 }

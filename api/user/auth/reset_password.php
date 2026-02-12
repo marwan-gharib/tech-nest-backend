@@ -9,7 +9,7 @@ if (
     empty($data['verification_code']) ||
     empty($data['new_password'])
 ) {
-    sendResponse(400, "Email, verification code, and new password are required", null, ["fields" => "Missing required fields"]);
+    sendResponse(400, "Email, verification code, and new password are required");
 }
 
 $stmt = $conn->prepare("SELECT id, is_verified FROM users WHERE email = ? AND verification_code = ? AND code_expires_at >= NOW()");
@@ -17,11 +17,11 @@ $stmt->execute([$data['email'], $data['verification_code']]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$user) {
-    sendResponse(400, "Invalid or expired verification code", null, ["verification_code" => "Invalid or expired"]);
+    sendResponse(400, "Invalid or expired verification code");
 }
 
 if ($user['is_verified'] == 0) {
-    sendResponse(403, "Email not verified. Please verify your email first.", null, ["email" => "Not verified"]);
+    sendResponse(403, "Email not verified. Please verify your email first.");
 }
 
 $newHashedPassword = password_hash($data['new_password'], PASSWORD_BCRYPT);
@@ -32,5 +32,5 @@ try {
 
     sendResponse(200, "Password updated successfully", ["user_id" => $user['id']]);
 } catch (Exception $e) {
-    sendResponse(500, "Failed to update password", null, ["exception" => $e->getMessage()]);
+    sendResponse(500, "Failed to update password");
 }

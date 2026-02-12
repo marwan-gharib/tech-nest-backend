@@ -6,15 +6,43 @@ include "../../../helpers/functions.php";
 
 try {
     // Parse and validate input
-    $data = json_decode(file_get_contents("php://input"), true);
-    if (!is_array($data)) {
-        sendResponse(400, "Invalid JSON input");
-    }
 
-    $email     = isset($data['email']) ? trim($data['email']) : null;
-    $name      = isset($data['name']) ? trim($data['name']) : null;
-    $provider  = isset($data['provider']) ? strtolower(trim($data['provider'])) : null;
-    $social_id = isset($data['social_id']) ? trim($data['social_id']) : null;
+    // استقبل البيانات من formData
+    $email     = isset($_POST['email']) ? trim($_POST['email']) : null;
+    $name      = isset($_POST['name']) ? trim($_POST['name']) : null;
+    $provider  = isset($_POST['provider']) ? strtolower(trim($_POST['provider'])) : null;
+    $social_id = isset($_POST['social_id']) ? trim($_POST['social_id']) : null;
+
+    // معالجة صورة البروفايل
+    // صورة البروفايل مطلوبة مع فحص كامل
+    if (!isset($_FILES['profile_image']) || $_FILES['profile_image']['error'] !== 0) {
+        sendResponse(400, "Profile image is required", null, ["profile_image" => "Image is required"]);
+    }
+    $upload_dir = '../../../uploads/';
+    if (!is_dir($upload_dir)) mkdir($upload_dir, 0777, true);
+    $ext = strtolower(pathinfo($_FILES['profile_image']['name'], PATHINFO_EXTENSION));
+    $allowed = ['jpg', 'jpeg', 'png', 'webp'];
+    if (!in_array($ext, $allowed)) {
+        sendResponse(400, "Invalid image type", null, ["profile_image" => "Allowed types: jpg, jpeg, png, webp"]);
+    }
+    if ($_FILES['profile_image']['size'] > 2 * 1024 * 1024) { // 2MB limit
+        sendResponse(400, "Image size too large (max 2MB)", null, ["profile_image" => "Max size 2MB"]);
+    }
+    $image_info = getimagesize($_FILES['profile_image']['tmp_name']);
+    if ($image_info === false) {
+        sendResponse(400, "Uploaded file is not a valid image", null, ["profile_image" => "Invalid image file"]);
+    }
+    $hash = hash_file('sha256', $_FILES['profile_image']['tmp_name']);
+    $existing = glob($upload_dir . $hash . '.*');
+    if ($existing && count($existing) > 0) {
+        $profile_image_path = 'uploads/' . basename($existing[0]);
+    } else {
+        $image_name = $hash . "." . $ext;
+        $profile_image_path = "uploads/" . $image_name;
+        if (!move_uploaded_file($_FILES['profile_image']['tmp_name'], '../../../' . $profile_image_path)) {
+            sendResponse(500, "Failed to upload image");
+        }
+    }
 
     // Validate required fields
     $missingFields = [];
@@ -35,22 +63,21 @@ try {
         sendResponse(400, "Unsupported provider", ["provider" => $provider]);
     }
 
-    require_once '../../../helpers/functions.php';
-
     // Check if user exists
+
     $stmt = $conn->prepare("SELECT * FROM users WHERE email = ?");
     $stmt->execute([$email]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($user) {
-        // Update social id if not set
+        // Update social id and profile image if not set
         if ($provider === "google") {
-            $conn->prepare("UPDATE users SET google_id=?, facebook_id=? WHERE id=?")
-                ->execute([$social_id, null, $user['id']]);
+            $conn->prepare("UPDATE users SET google_id=?, facebook_id=?, profile_image=? WHERE id=?")
+                ->execute([$social_id, null, $profile_image_path ? $profile_image_path : $user['profile_image'], $user['id']]);
         }
         if ($provider === "facebook") {
-            $conn->prepare("UPDATE users SET facebook_id=?, google_id=? WHERE id=?")
-                ->execute([$social_id, null, $user['id']]);
+            $conn->prepare("UPDATE users SET facebook_id=?, google_id=?, profile_image=? WHERE id=?")
+                ->execute([$social_id, null, $profile_image_path ? $profile_image_path : $user['profile_image'], $user['id']]);
         }
 
         // Generate new token and update
@@ -64,7 +91,8 @@ try {
             "user" => [
                 "id" => $user['id'],
                 "name" => $user['name'],
-                "email" => $user['email']
+                "email" => $user['email'],
+                "image_url" => $profile_image_path ? $profile_image_path : $user['profile_image']
             ]
         ]);
     }
@@ -74,15 +102,16 @@ try {
     $token_expiry = null;
 
     $stmt = $conn->prepare(
-        "INSERT INTO users (`name`, email, google_id, facebook_id, is_verified)
-         VALUES (?, ?, ?, ?, ?)"
+        "INSERT INTO users (`name`, email, google_id, facebook_id, is_verified, profile_image)
+         VALUES (?, ?, ?, ?, ?, ?)"
     );
     $stmt->execute([
         $name,
         $email,
         $provider === "google" ? $social_id : null,
         $provider === "facebook" ? $social_id : null,
-        1 // is_verified = 1 for social login
+        1, // is_verified = 1 for social login
+        $profile_image_path
     ]);
 
     $user_id = $conn->lastInsertId();
@@ -98,7 +127,8 @@ try {
         "user" => [
             "id" => $user_id,
             "name" => $name,
-            "email" => $email
+            "email" => $email,
+            "image_url" => $profile_image_path
         ]
     ]);
 } catch (Exception $e) {
