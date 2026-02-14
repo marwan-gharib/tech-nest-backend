@@ -51,16 +51,22 @@ $existingUser = $stmt->fetch(PDO::FETCH_ASSOC);
 if ($existingUser) {
     if ($existingUser['is_verified'] == 0) {
         $verification_code = rand(100000, 999999);
-        $update = $conn->prepare("UPDATE users SET verification_code=?, code_expires_at=DATE_ADD(NOW(), INTERVAL 5 MINUTE) WHERE id=?");
-        $update->execute([$verification_code, $existingUser['id']]);
+        $update = $conn->prepare("UPDATE users SET name=?, password=?, profile_image=?, verification_code=?, code_expires_at=DATE_ADD(NOW(), INTERVAL 5 MINUTE) WHERE id=?");
+        $update->execute([
+            $name,
+            password_hash($password, PASSWORD_BCRYPT),
+            $profile_image_path,
+            $verification_code,
+            $existingUser['id']
+        ]);
         sendVerificationEmail($email, $verification_code);
 
-        sendResponse(200, "Email already exists but not verified. Verification code resent.", [
+        sendResponse(200, "Email already exists but not verified. Data updated and verification code resent.", [
             "user" => [
                 "id" => $existingUser['id'],
-                "name" => $existingUser['name'],
-                "email" => $existingUser['email'],
-                "image_url" => $existingUser['profile_image'] ?? null
+                "name" => $name,
+                "email" => $email,
+                "image_url" => $profile_image_path
             ]
         ]);
     } else {
