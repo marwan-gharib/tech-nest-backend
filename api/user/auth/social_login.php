@@ -5,46 +5,17 @@ include "../../../helpers/functions.php";
 
 
 try {
-    // Parse and validate input
 
-    // استقبل البيانات من formData
     $email     = isset($_POST['email']) ? trim($_POST['email']) : null;
     $name      = isset($_POST['name']) ? trim($_POST['name']) : null;
     $provider  = isset($_POST['provider']) ? strtolower(trim($_POST['provider'])) : null;
     $social_id = isset($_POST['social_id']) ? trim($_POST['social_id']) : null;
+    $profile_image_path = isset($_POST['profile_image_url']) ? trim($_POST['profile_image_url']) : null;
 
-    // معالجة صورة البروفايل
-    // صورة البروفايل مطلوبة مع فحص كامل
-    if (!isset($_FILES['profile_image']) || $_FILES['profile_image']['error'] !== 0) {
-        sendResponse(400, "Profile image is required", null, ["profile_image" => "Image is required"]);
-    }
-    $upload_dir = '../../../uploads/';
-    if (!is_dir($upload_dir)) mkdir($upload_dir, 0777, true);
-    $ext = strtolower(pathinfo($_FILES['profile_image']['name'], PATHINFO_EXTENSION));
-    $allowed = ['jpg', 'jpeg', 'png', 'webp'];
-    if (!in_array($ext, $allowed)) {
-        sendResponse(400, "Invalid image type", null, ["profile_image" => "Allowed types: jpg, jpeg, png, webp"]);
-    }
-    if ($_FILES['profile_image']['size'] > 2 * 1024 * 1024) { // 2MB limit
-        sendResponse(400, "Image size too large (max 2MB)", null, ["profile_image" => "Max size 2MB"]);
-    }
-    $image_info = getimagesize($_FILES['profile_image']['tmp_name']);
-    if ($image_info === false) {
-        sendResponse(400, "Uploaded file is not a valid image", null, ["profile_image" => "Invalid image file"]);
-    }
-    $hash = hash_file('sha256', $_FILES['profile_image']['tmp_name']);
-    $existing = glob($upload_dir . $hash . '.*');
-    if ($existing && count($existing) > 0) {
-        $profile_image_path = 'uploads/' . basename($existing[0]);
-    } else {
-        $image_name = $hash . "." . $ext;
-        $profile_image_path = "uploads/" . $image_name;
-        if (!move_uploaded_file($_FILES['profile_image']['tmp_name'], '../../../' . $profile_image_path)) {
-            sendResponse(500, "Failed to upload image");
-        }
+    if (!$profile_image_path) {
+        sendResponse(400, "Profile image URL is required");
     }
 
-    // Validate required fields
     $missingFields = [];
     if (!$email) $missingFields[] = 'email';
     if (!$name) $missingFields[] = 'name';
