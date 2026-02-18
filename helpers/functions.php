@@ -1,9 +1,5 @@
 <?php
 
-/**
- * Converts an uploaded image file to .webp and saves it to the uploads directory.
- * Returns the relative path (uploads/...) or false on failure.
- */
 function saveImageAsWebp($tmpFile, $upload_dir, $hash, $quality = 80)
 {
     $image_info = getimagesize($tmpFile);
@@ -52,7 +48,6 @@ function sendResponse($status, $message, $data = null)
         "data" => $data ?? null,
     ];
 
-    // Remove null fields for cleaner response
     foreach (["data"] as $key) {
         if ($response[$key] === null) {
             unset($response[$key]);
@@ -77,7 +72,7 @@ function sendResponse($status, $message, $data = null)
 function validateToken($conn)
 {
     $headers = getallheaders();
-    $authHeader = $headers['token'] ?? null;
+    $authHeader = $headers['Token'] ?? null;
 
     if (!$authHeader) {
         sendResponse(401, "Token required");

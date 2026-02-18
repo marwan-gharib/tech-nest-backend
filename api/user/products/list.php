@@ -2,39 +2,105 @@
 include "../../../config/database.php";
 include "../../../helpers/functions.php";
 
-
-// Get pagination params from query string
+// Pagination
 $limit = isset($_GET['limit']) && is_numeric($_GET['limit']) && $_GET['limit'] > 0 ? (int)$_GET['limit'] : 10;
-$page = isset($_GET['page']) && is_numeric($_GET['page']) && $_GET['page'] > 0 ? (int)$_GET['page'] : 1;
+$page  = isset($_GET['page']) && is_numeric($_GET['page']) && $_GET['page'] > 0 ? (int)$_GET['page'] : 1;
 $offset = ($page - 1) * $limit;
 
-$data = json_decode(file_get_contents("php://input"), true);
+// Filters
+$category_id = $_GET['category_id'] ?? null;
+$search      = $_GET['search'] ?? null;
+$min_price   = isset($_GET['min_price']) ? (float)$_GET['min_price'] : null;
+$max_price   = isset($_GET['max_price']) ? (float)$_GET['max_price'] : null;
+$status      = $_GET['status'] ?? null;
 
-$user = validateToken($conn);
+// Sorting
+$sort  = $_GET['sort'] ?? null;
+$order = strtoupper($_GET['order'] ?? 'ASC');
 
 try {
 
+  $where = [];
+  $params = [];
 
-  if (isset($data['category_id'])) {
-    $check = $conn->prepare("SELECT id FROM categories WHERE id=?");
-    $check->execute([$data['category_id']]);
-    if ($check->rowCount() === 0) {
-      sendResponse(404, "Category not found", null, ["category_id" => "Not found"]);
-    }
-    $stmt = $conn->prepare("SELECT * FROM products WHERE category_id = ? LIMIT ? OFFSET ?");
-    $stmt->bindValue(1, $data['category_id'], PDO::PARAM_INT);
-    $stmt->bindValue(2, $limit, PDO::PARAM_INT);
-    $stmt->bindValue(3, $offset, PDO::PARAM_INT);
-    $stmt->execute();
-  } else {
-    $stmt = $conn->prepare("SELECT * FROM products LIMIT ? OFFSET ?");
-    $stmt->bindValue(1, $limit, PDO::PARAM_INT);
-    $stmt->bindValue(2, $offset, PDO::PARAM_INT);
-    $stmt->execute();
+  if ($category_id) {
+    $where[] = "category_id = ?";
+    $params[] = $category_id;
   }
 
+  if ($search) {
+    $where[] = "(name LIKE ? OR description LIKE ?)";
+    $params[] = "%$search%";
+    $params[] = "%$search%";
+  }
+
+  if ($min_price !== null) {
+    $where[] = "price >= ?";
+    $params[] = $min_price;
+  }
+
+  if ($max_price !== null) {
+    $where[] = "price <= ?";
+    $params[] = $max_price;
+  }
+
+  if ($status) {
+    $where[] = "status = ?";
+    $params[] = $status;
+  }
+
+  $where_sql = $where ? "WHERE " . implode(" AND ", $where) : "";
+
+  // Safe sorting
+  $allowedSort = ['name', 'price'];
+  $allowedOrder = ['ASC', 'DESC'];
+
+  $sort_sql = "";
+  if ($sort && in_array($sort, $allowedSort) && in_array($order, $allowedOrder)) {
+    $sort_sql = "ORDER BY LOWER($sort) $order";
+  }
+
+  // Main Query
+  $sql = "SELECT * FROM products $where_sql $sort_sql LIMIT ? OFFSET ?";
+  $stmt = $conn->prepare($sql);
+
+  $allParams = array_merge($params, [$limit, $offset]);
+
+  foreach ($allParams as $index => $param) {
+    $type = is_int($param) ? PDO::PARAM_INT : PDO::PARAM_STR;
+    $stmt->bindValue($index + 1, $param, $type);
+  }
+
+  $stmt->execute();
   $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
-  sendResponse(200, "Products retrieved successfully", $products);
+
+  // Count Query
+  $count_sql = "SELECT COUNT(*) FROM products $where_sql";
+  $count_stmt = $conn->prepare($count_sql);
+
+  foreach ($params as $index => $param) {
+    $type = is_int($param) ? PDO::PARAM_INT : PDO::PARAM_STR;
+    $count_stmt->bindValue($index + 1, $param, $type);
+  }
+
+  $count_stmt->execute();
+  $total = $count_stmt->fetchColumn();
+
+  $response = [
+    "products" => $products,
+    "pagination" => [
+      "total" => (int)$total,
+      "page"  => $page,
+      "limit" => $limit,
+      "pages" => ceil($total / $limit)
+    ]
+  ];
+
+  echo $sql;
+
+  sendResponse(200, "Products retrieved successfully", $response);
 } catch (Exception $e) {
-  sendResponse(500, "Failed to retrieve products", null, ["exception" => $e->getMessage()]);
+  sendResponse(500, "Failed to retrieve products", null, [
+    "error" => $e->getMessage()
+  ]);
 }
