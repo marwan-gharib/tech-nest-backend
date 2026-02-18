@@ -34,14 +34,13 @@ if ($image_info === false) {
     sendResponse(400, "Uploaded file is not a valid image", null, ["profile_image" => "Invalid image file"]);
 }
 $hash = hash_file('sha256', $_FILES['profile_image']['tmp_name']);
-$existing = glob($upload_dir . $hash . '.*');
+$existing = glob($upload_dir . $hash . '.webp');
 if ($existing && count($existing) > 0) {
     $profile_image_path = 'uploads/' . basename($existing[0]);
 } else {
-    $image_name = $hash . "." . $ext;
-    $profile_image_path = "uploads/" . $image_name;
-    if (!move_uploaded_file($_FILES['profile_image']['tmp_name'], '../../../' . $profile_image_path)) {
-        sendResponse(500, "Failed to upload image");
+    $profile_image_path = saveImageAsWebp($_FILES['profile_image']['tmp_name'], $upload_dir, $hash);
+    if (!$profile_image_path) {
+        sendResponse(500, "Failed to convert/upload image");
     }
 }
 

@@ -12,26 +12,20 @@ $image_path = null;
 
 if (isset($_FILES['image']) && $_FILES['image']['error'] === 0) {
     $upload_dir = "../../../uploads/";
-
-    if (!is_dir($upload_dir)) {
-        mkdir($upload_dir, 0777, true);
-    }
-
+    if (!is_dir($upload_dir)) mkdir($upload_dir, 0777, true);
     $ext = strtolower(pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION));
     $allowed = ['jpg', 'jpeg', 'png', 'webp'];
     if (!in_array($ext, $allowed)) {
         sendResponse(400, "Invalid image type");
     }
-
     $hash = hash_file('sha256', $_FILES['image']['tmp_name']);
-    $existing = glob($upload_dir . $hash . '.*');
+    $existing = glob($upload_dir . $hash . '.webp');
     if ($existing && count($existing) > 0) {
         $image_path = 'uploads/' . basename($existing[0]);
     } else {
-        $image_name = $hash . "." . $ext;
-        $image_path = "uploads/" . $image_name;
-        if (!move_uploaded_file($_FILES['image']['tmp_name'], "../../../" . $image_path)) {
-            sendResponse(500, "Failed to upload image");
+        $image_path = saveImageAsWebp($_FILES['image']['tmp_name'], $upload_dir, $hash);
+        if (!$image_path) {
+            sendResponse(500, "Failed to convert/upload image");
         }
     }
 }

@@ -1,5 +1,40 @@
 <?php
 
+/**
+ * Converts an uploaded image file to .webp and saves it to the uploads directory.
+ * Returns the relative path (uploads/...) or false on failure.
+ */
+function saveImageAsWebp($tmpFile, $upload_dir, $hash, $quality = 80)
+{
+    $image_info = getimagesize($tmpFile);
+    if ($image_info === false) return false;
+    $mime = $image_info['mime'];
+    switch ($mime) {
+        case 'image/jpeg':
+            $img = imagecreatefromjpeg($tmpFile);
+            break;
+        case 'image/png':
+            $img = imagecreatefrompng($tmpFile);
+            // Preserve transparency for PNG
+            imagepalettetotruecolor($img);
+            imagealphablending($img, true);
+            imagesavealpha($img, true);
+            break;
+        case 'image/webp':
+            $img = imagecreatefromwebp($tmpFile);
+            break;
+        default:
+            return false;
+    }
+    $image_name = $hash . ".webp";
+    $save_path = $upload_dir . $image_name;
+    $rel_path = 'uploads/' . $image_name;
+    $result = imagewebp($img, $save_path, $quality);
+    imagedestroy($img);
+    if ($result) return $rel_path;
+    return false;
+}
+
 require_once __DIR__ . "/../PHPMailer/Exception.php";
 require_once __DIR__ . "/../PHPMailer/PHPMailer.php";
 require_once __DIR__ . "/../PHPMailer/SMTP.php";
@@ -42,7 +77,7 @@ function sendResponse($status, $message, $data = null)
 function validateToken($conn)
 {
     $headers = getallheaders();
-    $authHeader = $headers['Token'] ?? null;
+    $authHeader = $headers['token'] ?? null;
 
     if (!$authHeader) {
         sendResponse(401, "Token required");
