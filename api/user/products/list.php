@@ -96,8 +96,6 @@ try {
     ]
   ];
 
-  echo $sql;
-
   sendResponse(200, "Products retrieved successfully", $response);
 } catch (Exception $e) {
   sendResponse(500, "Failed to retrieve products", null, [
