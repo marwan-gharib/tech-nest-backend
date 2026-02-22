@@ -72,13 +72,11 @@ function sendResponse($status, $message, $data = null)
 function validateToken($conn)
 {
     $headers = getallheaders();
-    $authHeader = $headers['Token'] ?? null;
+    $token = $headers['token'] ?? null;
 
-    if (!$authHeader) {
+    if (!$token) {
         sendResponse(401, "Token required");
     }
-
-    $token = str_replace('Bearer ', '', $authHeader);
 
     $stmt = $conn->prepare("SELECT * FROM users WHERE token = ? AND token_expiry > NOW() AND is_verified = 1");
     $stmt->execute([$token]);
