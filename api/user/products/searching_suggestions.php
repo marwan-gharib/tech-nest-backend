@@ -14,7 +14,7 @@ if (strlen($q) < 2) {
     sendResponse(400, "Search query must be at least 2 characters", null);
 }
 
-// $q = htmlspecialchars($q, ENT_QUOTES, 'UTF-8');
+$q = htmlspecialchars($q, ENT_QUOTES, 'UTF-8');
 
 try {
 
@@ -26,7 +26,7 @@ try {
         LIMIT 10
     ");
 
-    $stmt->execute(["$q%"]);
+    $stmt->execute(["%$q%"]);
 
     $results = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
