@@ -2,13 +2,13 @@
 include "../../../config/database.php";
 include "../../../helpers/functions.php";
 
+$user = validateToken($conn);
+
 $data = json_decode(file_get_contents("php://input"), true);
 
 if (!isset($data['quantity']) || !is_numeric($data['quantity']) || $data['quantity'] <= 0) {
     sendResponse(400, "Quantity must be a positive number", null, ["quantity" => "Must be a positive number"]);
 }
-
-$user = validateToken($conn);
 
 $productStmt = $conn->prepare(
     "SELECT stock FROM products WHERE id = ? LIMIT 1"

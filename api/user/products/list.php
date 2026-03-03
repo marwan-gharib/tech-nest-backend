@@ -53,37 +53,37 @@ try {
 
   // ===== category filter =====
   if ($category_id !== null) {
-    $where[] = "category_id = ?";
+    $where[] = "p.category_id = ?";
     $params[] = $category_id;
   }
 
   // ===== search filter =====
   if ($search !== null && $search !== '') {
-    $where[] = "(name LIKE ? OR description LIKE ?)";
+    $where[] = "(p.name LIKE ? OR p.description LIKE ?)";
     $params[] = "%$search%";
     $params[] = "%$search%";
   }
 
   // ===== price filter (optimized) =====
   if ($min_price !== null && $max_price !== null) {
-    $where[] = "price BETWEEN ? AND ?";
+    $where[] = "p.price BETWEEN ? AND ?";
     $params[] = $min_price;
     $params[] = $max_price;
   } else {
     if ($min_price !== null) {
-      $where[] = "price >= ?";
+      $where[] = "p.price >= ?";
       $params[] = $min_price;
     }
 
     if ($max_price !== null) {
-      $where[] = "price <= ?";
+      $where[] = "p.price <= ?";
       $params[] = $max_price;
     }
   }
 
   // ===== status filter =====
   if ($status !== null && $status !== '') {
-    $where[] = "status = ?";
+    $where[] = "p.status = ?";
     $params[] = $status;
   }
 
@@ -93,14 +93,17 @@ try {
   $sort_sql = "";
   if ($sort && in_array($sort, $allowedSort) && in_array($order, $allowedOrder)) {
     if ($sort === 'name') {
-      $sort_sql = "ORDER BY LOWER(name) $order";
+      $sort_sql = "ORDER BY LOWER(p.name) $order";
     } else {
-      $sort_sql = "ORDER BY $sort $order";
+      $sort_sql = "ORDER BY p.$sort $order";
     }
   }
 
   // ================= Main Query =================
-  $sql = "SELECT * FROM products $where_sql $sort_sql LIMIT ? OFFSET ?";
+  $sql = "SELECT p.*, c.name as category_name 
+          FROM products p 
+          LEFT JOIN categories c ON p.category_id = c.id 
+          $where_sql $sort_sql LIMIT ? OFFSET ?";
   $stmt = $conn->prepare($sql);
 
   $allParams = array_merge($params, [$limit, $offset]);
@@ -114,10 +117,27 @@ try {
   }
 
   $stmt->execute();
-  $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+  $products_data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+  // Format products to include nested category
+  $products = array_map(function($product) {
+    $category_id = $product['category_id'] !== null ? (int)$product['category_id'] : null;
+    $category_name = $product['category_name'];
+
+    unset($product['category_id']);
+    unset($product['category_name']);
+
+    $product['category'] = [
+      "id" => $category_id,
+      "name" => $category_name,
+      "image_url" => ""
+    ];
+
+    return $product;
+  }, $products_data);
 
   // ================= Count Query =================
-  $count_sql = "SELECT COUNT(*) FROM products $where_sql";
+  $count_sql = "SELECT COUNT(*) FROM products p $where_sql";
   $count_stmt = $conn->prepare($count_sql);
 
   foreach ($params as $index => $param) {
