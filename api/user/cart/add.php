@@ -11,7 +11,7 @@ if (!isset($data['quantity']) || !is_numeric($data['quantity']) || $data['quanti
 }
 
 $productStmt = $conn->prepare(
-    "SELECT stock FROM products WHERE id = ? LIMIT 1"
+    "SELECT * FROM products WHERE id = ? LIMIT 1"
 );
 $productStmt->execute([$data['product_id']]);
 $product = $productStmt->fetch(PDO::FETCH_ASSOC);
@@ -43,7 +43,8 @@ if ($existing) {
     sendResponse(200, "Cart updated successfully", [
         "id" => $existing['id'],
         "product_id" => $data['product_id'],
-        "quantity" => $totalQty
+        "quantity" => $totalQty,
+        "product" => $product
     ]);
 } else {
     $insert = $conn->prepare(
@@ -55,6 +56,7 @@ if ($existing) {
     sendResponse(201, "Item added to cart", [
         "id" => $cart_id,
         "product_id" => $data['product_id'],
-        "quantity" => $requestedQty
+        "quantity" => $requestedQty,
+        "product" => $product
     ]);
 }
