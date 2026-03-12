@@ -11,7 +11,11 @@ if (!isset($data['quantity']) || !is_numeric($data['quantity']) || $data['quanti
 }
 
 $productStmt = $conn->prepare(
-    "SELECT * FROM products WHERE id = ? LIMIT 1"
+    "SELECT p.*, c.name as category_name, c.image_url as category_image 
+     FROM products p 
+     LEFT JOIN categories c ON p.category_id = c.id 
+     WHERE p.id = ? 
+     LIMIT 1"
 );
 $productStmt->execute([$data['product_id']]);
 $product = $productStmt->fetch(PDO::FETCH_ASSOC);
@@ -19,6 +23,15 @@ $product = $productStmt->fetch(PDO::FETCH_ASSOC);
 if (!$product) {
     sendResponse(404, "Product not found", null, ["product_id" => "Not found"]);
 }
+
+// Format product to include nested category
+$product['category'] = [
+    "id" => $product['category_id'],
+    "name" => $product['category_name'],
+    "image_url" => $product['category_image']
+];
+unset($product['category_name']);
+unset($product['category_image']);
 
 $cartStmt = $conn->prepare(
     "SELECT id, quantity FROM cart WHERE user_id = ? AND product_id = ? LIMIT 1"

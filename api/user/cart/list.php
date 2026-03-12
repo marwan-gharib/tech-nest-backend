@@ -68,7 +68,7 @@ try {
         ];
     }
 
-    $deliveryCharges = $totalPrice > 500 ? 0 : 50;
+    $deliveryCharges = ($totalPrice == 0 || $totalPrice > 2000) ? 0 : 50;
 
     sendResponse(200, "Cart items retrieved successfully", [
         "items" => $cartItems,
