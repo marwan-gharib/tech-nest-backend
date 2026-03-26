@@ -1,482 +1,177 @@
-# 🌟 Tech Nest Backend API
+# 🚀 Tech Nest Backend API
 
-Welcome to the **Tech Nest Backend API**! This project powers the backend for an Tech Nest platform, offering endpoints for user and admin authentication, product and category management, and cart operations. Built with PHP, the API is modular, scalable, and easy to maintain.
+Welcome to the **Tech Nest Backend API**! This project powers a modern tech e-commerce platform with a robust RESTful API built in PHP. It supports full user and admin flows, including product management, category systems, cart operations, protected routes, and email verification.
 
 ---
 
 ## 📖 Table of Contents
-- [✨ Features](#-features)
-- [📂 Folder Structure](#-folder-structure)
-- [🔗 Endpoints](#-endpoints)
-  - [Admin Endpoints](#admin-endpoints)
+- [✨ Key Features](#-key-features)
+- [🏗️ System Architecture](#-system-architecture)
+- [🔐 Authentication & Authorization](#-authentication--authorization)
+- [📦 API Reference](#-api-reference)
   - [User Endpoints](#user-endpoints)
-- [⚙️ Setup Instructions](#️-setup-instructions)
-- [🛠️ Technologies Used](#️-technologies-used)
-- [🤝 Contributing](#-contributing)
-- [📜 License](#-license)
+  - [Admin Endpoints](#admin-endpoints)
+- [🎨 Response Format](#-response-format)
+- [💻 Client-Side Implementation Guide](#-client-side-implementation-guide)
+- [⚙️ Setup & Installation](#️-setup--installation)
 
 ---
 
-## ✨ Features
-- **Authentication**: Secure login and token-based authentication for both users and admins.
-- **Token Expiry**: Tokens expire after 7 days for users and 2 days for admins.
-- **Product Management**: Add, update, delete, and list products.
-- **Category Management**: Add, update, delete, and list categories.
-- **Cart Operations**: Add, update, remove, and list items in the cart.
-- **Social Login**: Support for Google and Facebook login.
+## ✨ Key Features
+- **Dual Role System**: Separate authentication flows for Users and Admins.
+- **Secure Authentication**: Token-based security with automatic expiry.
+- **Full E-Commerce Stack**: Categories, Products, and Cart management.
+- **Advanced Filtering**: Product listing with search, category filtering, price range, and sorting.
+- **Email Verification**: Built-in verification with PHPMailer for user registration.
+- **Modern Performance**: Image processing with WebP conversion to ensure fast load times.
 
 ---
 
-## 🔗 Endpoints
+## 🏗️ System Architecture
+The API follows a modular structure where each endpoint is a standalone PHP file, making it easy to scale and debug.
+- **`/api/user`**: Public and protected consumer-facing endpoints.
+- **`/api/admin`**: Protected management endpoints.
+- **`/helpers`**: Core logic for authentication, email, and responses.
+- **`/config`**: Database configuration.
+- **`/uploads`**: Optimized WebP storage for images.
 
-### Admin Endpoints
+---
 
-#### 🔒 Authentication
-- **Login**: `POST /api/admin/auth/login.php`
-  - **Description**: Authenticates an admin user and generates a token with a 2-day expiration.
-  - **Request Body**:
-    ```json
-    {
-      "email": "admin@example.com",
-      "password": "password123"
-    }
-    ```
-  - **Response**:
-    ```json
-    {
-      "status": 200,
-      "message": "Login successful",
-      "data": {
-        "token": "<admin_token>"
-      }
-    }
-    ```
+## 🔐 Authentication & Authorization
 
-- **Logout**: `POST /api/admin/auth/logout.php`
-  - **Description**: Logs out the admin user by invalidating the token.
-  - **Headers**:
-    ```json
-    {
-      "Authorization": "Bearer <admin_token>"
-    }
-    ```
-  - **Response**:
-    ```json
-    {
-      "status": 200,
-      "message": "Logout successful"
-    }
-    ```
+The API uses custom HTTP headers for security.
 
-- **Validate Token**: `GET /api/admin/auth/validate_token.php`
-  - **Description**: Validates the admin token to ensure it is still active.
-  - **Headers**:
-    ```json
-    {
-      "Authorization": "Bearer <admin_token>"
-    }
-    ```
-  - **Response**:
-    ```json
-    {
-      "status": 200,
-      "message": "Token is valid"
-    }
-    ```
+### 👤 User Authentication
+- **Header**: `token: <your_token>`
+- **Expiry**: Tokens are valid for 7 days.
+- **Status**: Account must be email-verified to use protected routes.
 
-#### 📂 Categories
-- **Add Category**: `POST /api/admin/categories/add.php`
-  - **Description**: Adds a new category to the database.
-  - **Request Body**:
-    ```json
-    {
-      "name": "Electronics"
-    }
-    ```
-  - **Response**:
-    ```json
-    {
-      "status": 201,
-      "message": "Category added successfully"
-    }
-    ```
+### 🛡️ Admin Authentication
+- **Header**: `Token: Bearer <your_token>`
+- **Expiry**: Tokens are valid for 2 days.
 
-- **Delete Category**: `DELETE /api/admin/categories/delete.php`
-  - **Description**: Deletes a category by its ID.
-  - **Request Body**:
-    ```json
-    {
-      "id": 1
-    }
-    ```
-  - **Response**:
-    ```json
-    {
-      "status": 200,
-      "message": "Category deleted successfully"
-    }
-    ```
+---
 
-- **List Categories**: `GET /api/admin/categories/list.php`
-  - **Description**: Retrieves a list of all categories.
-  - **Response**:
-    ```json
-    {
-      "status": 200,
-      "message": "Categories retrieved successfully",
-      "data": [
-        {
-          "id": 1,
-          "name": "Electronics"
-        }
-      ]
-    }
-    ```
-
-- **Update Category**: `PUT /api/admin/categories/update.php`
-  - **Description**: Updates the name of an existing category.
-  - **Request Body**:
-    ```json
-    {
-      "id": 1,
-      "name": "Updated Category Name"
-    }
-    ```
-  - **Response**:
-    ```json
-    {
-      "status": 200,
-      "message": "Category updated successfully"
-    }
-    ```
-
-#### 🛒 Products
-- **Add Product**: `POST /api/admin/products/add.php`
-  - **Description**: Adds a new product to the database.
-  - **Request Body**:
-    ```json
-    {
-      "name": "Smartphone",
-      "price": 299.99,
-      "category_id": 1,
-      "description": "Latest model smartphone",
-      "image": "path/to/image.jpg"
-    }
-    ```
-  - **Response**:
-    ```json
-    {
-      "status": 201,
-      "message": "Product added successfully"
-    }
-    ```
-
-- **Delete Product**: `DELETE /api/admin/products/delete.php`
-  - **Description**: Deletes a product by its ID.
-  - **Request Body**:
-    ```json
-    {
-      "id": 1
-    }
-    ```
-  - **Response**:
-    ```json
-    {
-      "status": 200,
-      "message": "Product deleted successfully"
-    }
-    ```
-
-- **List Products**: `GET /api/admin/products/list.php`
-  - **Description**: Retrieves a list of all products.
-  - **Response**:
-    ```json
-    {
-      "status": 200,
-      "message": "Products retrieved successfully",
-      "data": [
-        {
-          "id": 1,
-          "name": "Smartphone",
-          "price": 299.99,
-          "category_id": 1,
-          "description": "Latest model smartphone",
-          "image": "path/to/image.jpg"
-        }
-      ]
-    }
-    ```
-
-- **Update Product**: `PUT /api/admin/products/update.php`
-  - **Description**: Updates the details of an existing product.
-  - **Request Body**:
-    ```json
-    {
-      "id": 1,
-      "name": "Updated Smartphone",
-      "price": 249.99,
-      "category_id": 1,
-      "description": "Updated description",
-      "image": "path/to/new_image.jpg"
-    }
-    ```
-  - **Response**:
-    ```json
-    {
-      "status": 200,
-      "message": "Product updated successfully"
-    }
-    ```
+## 📦 API Reference
 
 ### User Endpoints
 
-#### 🔑 Authentication
-- **Register**: `POST /api/user/auth/register.php`
-  - **Description**: Registers a new user and sends a verification email.
-  - **Request Body**:
-    ```json
-    {
-      "name": "John Doe",
-      "email": "john@example.com",
-      "password": "password123"
-    }
-    ```
-  - **Response**:
-    ```json
-    {
-      "status": 201,
-      "message": "Registration successful, please check your email to verify your account"
-    }
-    ```
+#### 🔑 Auth & Accounts
+| Endpoint | Method | Params Type | Description |
+| :--- | :--: | :--- | :--- |
+| `api/user/auth/register.php` | `POST` | `FormData` | Register with `name`, `email`, `password`, and `profile_image`. |
+| `api/user/auth/verify_email.php` | `POST` | `JSON` | Verify account using `email` and `verification_code`. |
+| `api/user/auth/login.php` | `POST` | `JSON` | Authenticate with `email` and `password`. |
+| `api/user/auth/forget_password.php` | `POST` | `JSON` | Request a password reset code for an `email`. |
+| `api/user/auth/reset_password.php` | `POST` | `JSON` | Reset password using `email`, `code`, and `new_password`. |
+| `api/user/auth/logout.php` | `POST` | `Header` | Invalidate current user token. |
 
-- **Login**: `POST /api/user/auth/login.php`
-  - **Description**: Authenticates a user and generates a token with a 7-day expiration.
-  - **Request Body**:
-    ```json
-    {
-      "email": "john@example.com",
-      "password": "password123"
-    }
-    ```
-  - **Response**:
-    ```json
-    {
-      "status": 200,
-      "message": "Login successful",
-      "data": {
-        "token": "<user_token>"
-      }
-    }
-    ```
+#### 🛍️ Products & Categories
+| Endpoint | Method | Query Params | Description |
+| :--- | :--: | :--- | :--- |
+| `api/user/categories/list.php` | `GET` | - | Returns all categories. |
+| `api/user/products/list.php` | `GET` | `limit`, `page`, `category_id`, `search`, `min_price`, `max_price`, `sort`, `order` | Advanced product listing with pagination and filters. |
+| `api/user/products/searching_suggestions.php` | `GET` | `search_query` | Dynamic search suggestions (min 2 chars). |
 
-- **Logout**: `POST /api/user/auth/logout.php`
-  - **Description**: Logs out the user by invalidating the token.
-  - **Headers**:
-    ```json
-    {
-      "Authorization": "Bearer <user_token>"
-    }
-    ```
-  - **Response**:
-    ```json
-    {
-      "status": 200,
-      "message": "Logout successful"
-    }
-    ```
-
-- **Social Login**: `POST /api/user/auth/social_login.php`
-  - **Description**: Authenticates a user via social media (Google, Facebook).
-  - **Request Body**:
-    ```json
-    {
-      "provider": "google",
-      "token": "<social_token>"
-    }
-    ```
-  - **Response**:
-    ```json
-    {
-      "status": 200,
-      "message": "Social login successful",
-      "data": {
-        "token": "<user_token>"
-      }
-    }
-    ```
-
-- **Validate Token**: `GET /api/user/auth/validate_token.php`
-  - **Description**: Validates the user token to ensure it is still active.
-  - **Headers**:
-    ```json
-    {
-      "Authorization": "Bearer <user_token>"
-    }
-    ```
-  - **Response**:
-    ```json
-    {
-      "status": 200,
-      "message": "Token is valid"
-    }
-    ```
-
-- **Verify Email**: `POST /api/user/auth/verify_email.php`
-  - **Description**: Verifies the user's email address.
-  - **Request Body**:
-    ```json
-    {
-      "token": "<verification_token>"
-    }
-    ```
-  - **Response**:
-    ```json
-    {
-      "status": 200,
-      "message": "Email verified successfully"
-    }
-    ```
-
-#### 📂 Categories
-- **List Categories**: `GET /api/user/categories/list.php`
-  - **Description**: Retrieves a list of all categories.
-  - **Response**:
-    ```json
-    {
-      "status": 200,
-      "message": "Categories retrieved successfully",
-      "data": [
-        {
-          "id": 1,
-          "name": "Electronics"
-        }
-      ]
-    }
-    ```
-
-#### 🛍️ Products
-- **List Products**: `GET /api/user/products/list.php`
-  - **Description**: Retrieves a list of all products.
-  - **Response**:
-    ```json
-    {
-      "status": 200,
-      "message": "Products retrieved successfully",
-      "data": [
-        {
-          "id": 1,
-          "name": "Smartphone",
-          "price": 299.99,
-          "category_id": 1,
-          "description": "Latest model smartphone",
-          "image": "path/to/image.jpg"
-        }
-      ]
-    }
-    ```
-
-#### 🛒 Cart
-- **Add to Cart**: `POST /api/user/cart/add.php`
-  - **Description**: Adds a product to the user's cart.
-  - **Request Body**:
-    ```json
-    {
-      "product_id": 1,
-      "quantity": 2
-    }
-    ```
-  - **Response**:
-    ```json
-    {
-      "status": 201,
-      "message": "Product added to cart"
-    }
-    ```
-
-- **List Cart Items**: `GET /api/user/cart/list.php`
-  - **Description**: Retrieves the items in the user's cart.
-  - **Response**:
-    ```json
-    {
-      "status": 200,
-      "message": "Cart items retrieved successfully",
-      "data": [
-        {
-          "id": 1,
-          "product_id": 1,
-          "quantity": 2
-        }
-      ]
-    }
-    ```
-
-- **Remove from Cart**: `DELETE /api/user/cart/remove.php`
-  - **Description**: Removes an item from the user's cart.
-  - **Request Body**:
-    ```json
-    {
-      "id": 1
-    }
-    ```
-  - **Response**:
-    ```json
-    {
-      "status": 200,
-      "message": "Item removed from cart"
-    }
-    ```
-
-- **Update Cart Quantity**: `PUT /api/user/cart/update_quantity.php`
-  - **Description**: Updates the quantity of an item in the user's cart.
-  - **Request Body**:
-    ```json
-    {
-      "id": 1,
-      "quantity": 3
-    }
-    ```
-  - **Response**:
-    ```json
-    {
-      "status": 200,
-      "message": "Cart quantity updated"
-    }
-    ```
+#### 🛒 Shopping Cart
+| Endpoint | Method | Params Type | Description |
+| :--- | :--: | :--- | :--- |
+| `api/user/cart/list.php` | `GET` | - | Get all items in user's cart. |
+| `api/user/cart/add.php` | `POST` | `JSON` | Add product to cart (`product_id`, `quantity`). |
+| `api/user/cart/update_quantity.php` | `POST` | `JSON` | Update item quantity (`id`, `quantity`). |
+| `api/user/cart/remove.php` | `POST` | `JSON` | Remove item from cart by its `id`. |
+| `api/user/cart/count.php` | `GET` | - | Returns total number of items in cart. |
 
 ---
 
-## ⚙️ Setup Instructions
+### Admin Endpoints
 
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/your-username/tech-nest-backend-php.git
-   ```
-2. **Navigate to the project directory**:
-   ```bash
-   cd Tech Nest-backend-php
-   ```
-3. **Set up the database**:
-   - Import the `ecommerce_db.sql` file into your MySQL database.
-   - Update the database credentials in `config/database.php`.
-4. **Start the server**:
-   - Use XAMPP or any PHP server to host the project.
-5. **Test the endpoints**:
-   - Use tools like Postman or cURL.
+#### 🛡 Admin Auth
+| Endpoint | Method | Params Type | Description |
+| :--- | :--: | :--- | :--- |
+| `api/admin/auth/login.php` | `POST` | `JSON` | Admin login to get bearer token. |
 
----
+#### 📂 Category Management
+| Endpoint | Method | Params Type | Description |
+| :--- | :--: | :--- | :--- |
+| `api/admin/categories/list.php` | `GET` | - | List all categories. |
+| `api/admin/categories/add.php` | `POST` | `FormData` | Add category with `name` and optional `category_image`. |
+| `api/admin/categories/update.php` | `POST` | `FormData` | Update category with `id`, `name`, and optional `category_image`. |
+| `api/admin/categories/delete.php` | `POST` | `JSON` | Delete category by `id`. |
 
-## 🛠️ Technologies Used
-- **Backend**: PHP
-- **Database**: MySQL
-- **Authentication**: Token-based (JWT-like custom implementation)
-- **Libraries**: PHPMailer for email verification
+#### 📦 Product Management
+| Endpoint | Method | Params Type | Description |
+| :--- | :--: | :--- | :--- |
+| `api/admin/products/list.php` | `GET` | `limit`, `page`, etc. | Admin-view product listing. |
+| `api/admin/products/add.php` | `POST` | `FormData` | Add product with `name`, `price`, `stock`, `category_id`, `description`, and `product_image`. |
+| `api/admin/products/update.php` | `POST` | `FormData` | Update product details and image using `id`. |
+| `api/admin/products/delete.php` | `POST` | `JSON` | Delete product by `id`. |
 
 ---
 
-## 🤝 Contributing
-Contributions are welcome! Please fork the repository and submit a pull request.
+## 🎨 Response Format
+
+All responses follow a standard envelope structure:
+
+```json
+{
+  "status": 200,
+  "message": "Operation successful",
+  "data": {
+    "key": "value"
+  }
+}
+```
+
+- **200/201**: Success.
+- **400**: Validation error or missing parameters.
+- **401**: Authentication failed (Invalid or expired token).
+- **404**: Resource not found.
+- **409**: Conflict (e.g., email already exists).
+- **500**: Internal server error.
 
 ---
 
-## 📜 License
-This project is licensed under the MIT License. See the LICENSE file for details. You can view the license [here](LICENSE).
+## 💻 Client-Side Implementation Guide
+
+### Handling Form Data vs JSON
+- **JSON**: Used for data-only requests (Login, Cart updates, Deleting). Use `Content-Type: application/json`.
+- **Form Data**: Used when uploading files (Register, Adding Products). **Do NOT** set the `Content-Type` header manually in JavaScript (let the browser handle it with `Multipart/form-data`).
+
+### Example: Product List with Filters
+```javascript
+const response = await fetch('http://localhost/tech-nest-backend/api/user/products/list.php?search=phone&min_price=100&sort=price&order=DESC', {
+  headers: {
+    'token': 'YOUR_USER_TOKEN'
+  }
+});
+const result = await response.json();
+```
+
+### Example: File Upload (Registration)
+```javascript
+const formData = new FormData();
+formData.append('name', 'John Doe');
+formData.append('email', 'john@example.com');
+formData.append('password', 'secure123');
+formData.append('profile_image', imageFile);
+
+const response = await fetch('api/user/auth/register.php', {
+  method: 'POST',
+  body: formData
+});
+```
+
+---
+
+## ⚙️ Setup & Installation
+
+1. **Environment**: Ensure you are running PHP 7.4+ and MySQL on XAMPP/WAMP.
+2. **Database**: Import the provided SQL schema into your MySQL server.
+3. **Config**: Update `config/database.php` with your local DB credentials.
+4. **Permissions**: Ensure the `uploads/` directory is writable for image storage.
+5. **Mail**: Update the SMTP credentials in `helpers/functions.php` to use your own email provider for verifications.
+
+---
+
+Designed with ❤️ for **Tech Nest**.
