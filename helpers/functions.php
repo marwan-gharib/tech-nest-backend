@@ -1,17 +1,19 @@
 <?php
 
-function saveImageAsWebp($tmpFile, $upload_dir, $hash, $quality = 80)
+function saveImageAsWebp($tmpFile, $upload_dir, $hash, $quality = 90)
 {
     $image_info = getimagesize($tmpFile);
     if ($image_info === false) return false;
+    $width = $image_info[0];
+    $height = $image_info[1];
     $mime = $image_info['mime'];
+
     switch ($mime) {
         case 'image/jpeg':
             $img = imagecreatefromjpeg($tmpFile);
             break;
         case 'image/png':
             $img = imagecreatefrompng($tmpFile);
-            // Preserve transparency for PNG
             imagepalettetotruecolor($img);
             imagealphablending($img, true);
             imagesavealpha($img, true);
@@ -22,11 +24,27 @@ function saveImageAsWebp($tmpFile, $upload_dir, $hash, $quality = 80)
         default:
             return false;
     }
+
+    // Resize if dimensions exceed 1200px
+    $max_dim = 1200;
+    if ($width > $max_dim || $height > $max_dim) {
+        if ($width > $height) {
+            $new_width = $max_dim;
+            $new_height = floor($height * ($max_dim / $width));
+        } else {
+            $new_height = $max_dim;
+            $new_width = floor($width * ($max_dim / $height));
+        }
+        $img = imagescale($img, $new_width, $new_height, IMG_BICUBIC);
+    }
+
     $image_name = $hash . ".webp";
     $save_path = $upload_dir . $image_name;
     $rel_path = 'uploads/' . $image_name;
+
     $result = imagewebp($img, $save_path, $quality);
     imagedestroy($img);
+
     if ($result) return $rel_path;
     return false;
 }
