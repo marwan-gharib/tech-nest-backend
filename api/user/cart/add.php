@@ -40,8 +40,7 @@ $cartStmt->execute([$user['id'], $data['product_id']]);
 $existing = $cartStmt->fetch(PDO::FETCH_ASSOC);
 
 $requestedQty = (int)$data['quantity'];
-$currentQty   = $existing ? (int)$existing['quantity'] : 0;
-$totalQty     = $currentQty + $requestedQty;
+$totalQty     = $requestedQty;
 
 if ($totalQty > (int)$product['stock']) {
     sendResponse(400, "Only {$product['stock']} items available", null, ["stock" => "Insufficient stock"]);
