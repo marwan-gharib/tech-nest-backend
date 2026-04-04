@@ -30,14 +30,20 @@ $max_price = (isset($_GET['max_price']) && is_numeric($_GET['max_price']) && $_G
   ? (float)$_GET['max_price']
   : null;
 
-$status = isset($_GET['status']) ? trim($_GET['status']) : null;
-
 // ================= Sorting =================
-$sort  = $_GET['sort'] ?? null;
+$sort  = $_GET['sort'] ?? 'name';
 $order = strtoupper($_GET['order'] ?? 'ASC');
 
-$allowedSort  = ['name', 'price', 'created_at', 'id'];
+$allowedSort  = ['name', 'price'];
 $allowedOrder = ['ASC', 'DESC'];
+
+// Fallback to defaults if provided values are invalid
+if (!in_array($sort, $allowedSort)) {
+  $sort = 'name';
+}
+if (!in_array($order, $allowedOrder)) {
+  $order = 'ASC';
+}
 
 // ================= Validation =================
 if ($min_price !== null && $max_price !== null && $min_price > $max_price) {
@@ -81,22 +87,13 @@ try {
     }
   }
 
-  // ===== status filter =====
-  if ($status !== null && $status !== '') {
-    $where[] = "p.status = ?";
-    $params[] = $status;
-  }
-
   $where_sql = $where ? "WHERE " . implode(" AND ", $where) : "";
 
   // ===== sorting =====
-  $sort_sql = "";
-  if ($sort && in_array($sort, $allowedSort) && in_array($order, $allowedOrder)) {
-    if ($sort === 'name') {
-      $sort_sql = "ORDER BY LOWER(p.name) $order";
-    } else {
-      $sort_sql = "ORDER BY p.$sort $order";
-    }
+  if ($sort === 'name') {
+    $sort_sql = "ORDER BY LOWER(p.name) $order";
+  } else {
+    $sort_sql = "ORDER BY p.$sort $order";
   }
 
   // ================= Main Query =================
