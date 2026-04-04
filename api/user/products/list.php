@@ -16,39 +16,25 @@ $page = (isset($_GET['page']) && is_numeric($_GET['page']) && $_GET['page'] > 0)
 $offset = ($page - 1) * $limit;
 
 // ================= Filters =================
-$category_ids = [];
-if (isset($_GET['category_id'])) {
-    if (is_array($_GET['category_id'])) {
-        foreach ($_GET['category_id'] as $val) {
-            if (is_numeric($val) && $val > 0) $category_ids[] = (int)$val;
-        }
-    } else {
-        $val = trim($_GET['category_id']);
-        if ($val !== 'null' && $val !== '') {
-            $parts = explode(',', $val);
-            foreach ($parts as $part) {
-                if (is_numeric($part) && $part > 0) $category_ids[] = (int)$part;
-            }
-        }
-    }
-}
-$category_ids = array_unique($category_ids);
+$category_id = (isset($_GET['category_id']) && is_numeric($_GET['category_id']) && $_GET['category_id'] > 0)
+  ? (int)$_GET['category_id']
+  : null;
 
-$search = (isset($_GET['search']) && $_GET['search'] !== 'null') ? trim($_GET['search']) : null;
+$search = isset($_GET['search']) ? trim($_GET['search']) : null;
 
-$min_price = (isset($_GET['min_price']) && $_GET['min_price'] !== 'null' && is_numeric($_GET['min_price']) && $_GET['min_price'] >= 0)
+$min_price = (isset($_GET['min_price']) && is_numeric($_GET['min_price']) && $_GET['min_price'] >= 0)
   ? (float)$_GET['min_price']
   : null;
 
-$max_price = (isset($_GET['max_price']) && $_GET['max_price'] !== 'null' && is_numeric($_GET['max_price']) && $_GET['max_price'] >= 0)
+$max_price = (isset($_GET['max_price']) && is_numeric($_GET['max_price']) && $_GET['max_price'] >= 0)
   ? (float)$_GET['max_price']
   : null;
 
-$status = (isset($_GET['status']) && $_GET['status'] !== 'null') ? trim($_GET['status']) : null;
+$status = isset($_GET['status']) ? trim($_GET['status']) : null;
 
 // ================= Sorting =================
-$sort  = (isset($_GET['sort']) && $_GET['sort'] !== 'null') ? $_GET['sort'] : null;
-$order = (isset($_GET['order']) && $_GET['order'] !== 'null') ? strtoupper($_GET['order']) : 'ASC';
+$sort  = $_GET['sort'] ?? null;
+$order = strtoupper($_GET['order'] ?? 'ASC');
 
 $allowedSort  = ['name', 'price', 'created_at', 'id'];
 $allowedOrder = ['ASC', 'DESC'];
@@ -66,17 +52,9 @@ try {
   $params = [];
 
   // ===== category filter =====
-  if (!empty($category_ids)) {
-    if (count($category_ids) === 1) {
-      $where[] = "p.category_id = ?";
-      $params[] = $category_ids[0];
-    } else {
-      $placeholders = implode(',', array_fill(0, count($category_ids), '?'));
-      $where[] = "p.category_id IN ($placeholders)";
-      foreach ($category_ids as $id) {
-        $params[] = $id;
-      }
-    }
+  if ($category_id !== null) {
+    $where[] = "p.category_id = ?";
+    $params[] = $category_id;
   }
 
   // ===== search filter =====
@@ -119,8 +97,6 @@ try {
     } else {
       $sort_sql = "ORDER BY p.$sort $order";
     }
-  } else {
-    $sort_sql = "ORDER BY p.id DESC";
   }
 
   // ================= Main Query =================
