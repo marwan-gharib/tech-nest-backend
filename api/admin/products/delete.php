@@ -2,11 +2,11 @@
 include "../../../config/database.php";
 include "../../../helpers/functions.php";
 
-$data = json_decode(file_get_contents("php://input"), true);
+$data  = json_decode(file_get_contents("php://input"), true);
 $admin = validateAdminToken($conn);
 
 if (!$data || empty($data['id'])) {
-    sendResponse(400, "Product id is required");
+    sendResponse(400, t('product_id_required'));
 }
 
 $stmt = $conn->prepare("SELECT image_url FROM products WHERE id = ?");
@@ -18,7 +18,7 @@ try {
     $delete->execute([$data['id']]);
 
     if ($delete->rowCount() === 0) {
-        sendResponse(404, "Product not found");
+        sendResponse(404, t('product_not_found'));
     }
 
     if ($imagePath && !isImageUsed($conn, $imagePath)) {
@@ -26,7 +26,7 @@ try {
         if (file_exists($fullPath)) unlink($fullPath);
     }
 
-    sendResponse(200, "Product deleted successfully");
+    sendResponse(200, t('product_deleted'));
 } catch (Exception $e) {
-    sendResponse(500, "Failed to delete product");
+    sendResponse(500, t('product_delete_failed'));
 }

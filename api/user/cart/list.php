@@ -3,37 +3,40 @@ include "../../../config/database.php";
 include "../../../helpers/functions.php";
 
 $user = validateToken($conn);
+$lang = getRequestedLang();
 
 try {
     $stmt = $conn->prepare("
-        SELECT 
-            c.id as cart_id, 
-            c.quantity, 
-            p.id as product_id, 
-            p.name, 
-            p.price, 
-            p.description, 
-            p.image_url, 
-            p.category_id, 
+        SELECT
+            c.id         AS cart_id,
+            c.quantity,
+            p.id         AS product_id,
+            COALESCE(pt.name, p.name)              AS name,
+            p.price,
+            COALESCE(pt.description, p.description) AS description,
+            p.image_url,
+            p.category_id,
             p.stock,
-            cat.name as category_name
-        FROM cart c 
-        JOIN products p ON c.product_id = p.id 
-        LEFT JOIN categories cat ON p.category_id = cat.id
+            COALESCE(ct.name, cat.name)            AS category_name
+        FROM cart c
+        JOIN products p ON c.product_id = p.id
+        LEFT JOIN products_translations   pt  ON pt.product_id  = p.id   AND pt.lang  = ?
+        LEFT JOIN categories              cat ON cat.id          = p.category_id
+        LEFT JOIN categories_translations ct  ON ct.category_id = cat.id AND ct.lang  = ?
         WHERE c.user_id = ?
     ");
-    $stmt->execute([$user['id']]);
+    $stmt->execute([$lang, $lang, $user['id']]);
     $cartData = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    $cartItems = [];
+    $cartItems    = [];
     $totalQuantity = 0;
-    $totalPrice = 0;
+    $totalPrice    = 0;
 
     foreach ($cartData as $item) {
-        $cartId = (int)$item['cart_id'];
+        $cartId       = (int)$item['cart_id'];
         $requestedQty = (int)$item['quantity'];
-        $stock = (int)$item['stock'];
-        $price = (float)$item['price'];
+        $stock        = (int)$item['stock'];
+        $price        = (float)$item['price'];
 
         if ($stock <= 0) {
             $deleteStmt = $conn->prepare("DELETE FROM cart WHERE id = ?");
@@ -48,20 +51,20 @@ try {
         }
 
         $totalQuantity += $requestedQty;
-        $totalPrice += $requestedQty * $price;
+        $totalPrice    += $requestedQty * $price;
 
         $cartItems[] = [
-            "id" => $cartId,
+            "id"       => $cartId,
             "quantity" => $requestedQty,
-            "product" => [
-                "id" => (int)$item['product_id'],
-                "name" => $item['name'],
-                "price" => $price,
+            "product"  => [
+                "id"          => (int)$item['product_id'],
+                "name"        => $item['name'],
+                "price"       => $price,
                 "description" => $item['description'],
-                "image_url" => $item['image_url'],
-                "stock" => $stock,
-                "category" => [
-                    "id" => $item['category_id'] ? (int)$item['category_id'] : null,
+                "image_url"   => $item['image_url'],
+                "stock"       => $stock,
+                "category"    => [
+                    "id"   => $item['category_id'] ? (int)$item['category_id'] : null,
                     "name" => $item['category_name'] ?? null
                 ]
             ]
@@ -70,14 +73,14 @@ try {
 
     $deliveryCharges = ($totalPrice == 0 || $totalPrice > 2000) ? 0 : 50;
 
-    sendResponse(200, "Cart items retrieved successfully", [
-        "items" => $cartItems,
-        "total_quantity" => $totalQuantity,
-        "total_price" => $totalPrice,
+    sendResponse(200, t('cart_retrieved'), [
+        "items"            => $cartItems,
+        "total_quantity"   => $totalQuantity,
+        "total_price"      => $totalPrice,
         "delivery_charges" => $deliveryCharges,
-        "grand_total" => $totalPrice + $deliveryCharges
+        "grand_total"      => $totalPrice + $deliveryCharges
     ]);
 
 } catch (Exception $e) {
-    sendResponse(500, "Failed to retrieve cart items", null, ["error" => $e->getMessage()]);
+    sendResponse(500, t('cart_failed'));
 }

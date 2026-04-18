@@ -5,10 +5,8 @@ include "../../../helpers/functions.php";
 $admin = validateAdminToken($conn);
 
 if (empty($_POST['id']) || empty($_POST['name'])) {
-    sendResponse(400, "All fields required");
+    sendResponse(400, t('all_fields_required'));
 }
-
-$image_path = null;
 
 $stmt = $conn->prepare("SELECT image_url FROM categories WHERE id=?");
 $stmt->execute([$_POST['id']]);
@@ -22,7 +20,7 @@ if (isset($_FILES['image']) && $_FILES['image']['error'] === 0) {
     $ext = strtolower(pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION));
     $allowed = ['jpg', 'jpeg', 'png', 'webp'];
     if (!in_array($ext, $allowed)) {
-        sendResponse(400, "Invalid image type");
+        sendResponse(400, t('invalid_image_type'));
     }
     $hash = hash_file('sha256', $_FILES['image']['tmp_name']);
     $existing = glob($upload_dir . $hash . '.webp');
@@ -31,7 +29,7 @@ if (isset($_FILES['image']) && $_FILES['image']['error'] === 0) {
     } else {
         $image_path = saveImageAsWebp($_FILES['image']['tmp_name'], $upload_dir, $hash);
         if (!$image_path) {
-            sendResponse(500, "Failed to convert/upload image");
+            sendResponse(500, t('image_upload_failed'));
         }
     }
 } else {
@@ -39,13 +37,14 @@ if (isset($_FILES['image']) && $_FILES['image']['error'] === 0) {
 }
 
 $category_id = intval($_POST['id']);
-$name = trim($_POST['name']);
+$name        = trim($_POST['name']);
+$name_ar     = isset($_POST['name_ar']) ? trim($_POST['name_ar']) : $name; // fallback to EN
 
 $check = $conn->prepare("SELECT id FROM categories WHERE id = ? LIMIT 1");
 $check->execute([$category_id]);
 
 if (!$check->fetch(PDO::FETCH_ASSOC)) {
-    sendResponse(404, "Category not found");
+    sendResponse(404, t('category_not_found'));
 }
 
 try {
@@ -59,7 +58,15 @@ try {
         }
     }
 
-    sendResponse(200, "Category updated successfully", ["id" => $category_id, "name" => $name, "image_url" => $image_path]);
+    // Sync Arabic translation
+    upsertCategoryTranslation($conn, $category_id, $name_ar);
+
+    sendResponse(200, t('category_updated'), [
+        "id"        => $category_id,
+        "name"      => $name,
+        "name_ar"   => $name_ar,
+        "image_url" => $image_path
+    ]);
 } catch (Exception $e) {
-    sendResponse(500, "Failed to update category");
+    sendResponse(500, t('category_update_failed'));
 }

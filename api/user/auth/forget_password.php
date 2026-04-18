@@ -5,11 +5,11 @@ include "../../../helpers/functions.php";
 $data = json_decode(file_get_contents("php://input"), true);
 
 if (empty($data['email'])) {
-    sendResponse(400, "Email is required");
+    sendResponse(400, t('email_required'));
 }
 
 if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
-    sendResponse(400, "Invalid email format");
+    sendResponse(400, t('invalid_email'));
 }
 
 $stmt = $conn->prepare("SELECT id, is_verified FROM users WHERE email = ?");
@@ -17,11 +17,11 @@ $stmt->execute([$data['email']]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$user) {
-    sendResponse(404, "User with this email does not exist");
+    sendResponse(404, t('email_not_found'));
 }
 
 if ($user['is_verified'] == 0) {
-    sendResponse(403, "Email not verified. Please verify your email first.");
+    sendResponse(403, t('email_not_verified'));
 }
 
 $verification_code = rand(100000, 999999);
@@ -32,7 +32,7 @@ try {
 
     sendForgotPasswordEmail($data['email'], $verification_code);
 
-    sendResponse(200, "Password reset code sent to your email", ["email" => $data['email']]);
+    sendResponse(200, t('code_sent'), ["email" => $data['email']]);
 } catch (Exception $e) {
-    sendResponse(500, "Failed to process request");
+    sendResponse(500, t('reset_request_failed'));
 }

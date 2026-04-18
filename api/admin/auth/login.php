@@ -5,11 +5,11 @@ include "../../../helpers/functions.php";
 $data = json_decode(file_get_contents("php://input"), true);
 
 if (!isset($data['email']) || !isset($data['password'])) {
-    sendResponse(400, "Email and password are required");
+    sendResponse(400, t('email_password_required'));
 }
 
 if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
-    sendResponse(400, "Invalid email format");
+    sendResponse(400, t('invalid_email'));
 }
 
 // Check against admins table
@@ -20,13 +20,13 @@ $admin = $stmt->fetch(PDO::FETCH_ASSOC);
 if ($admin && password_verify($data['password'], $admin['password'])) {
     $token = generateTokenWithExpiry($admin['id'], 2, $conn, 'admins');
 
-    sendResponse(200, "Admin login successful", [
-        "id" => $admin['id'],
-        "name" => $admin['name'],
+    sendResponse(200, t('admin_login_success'), [
+        "id"    => $admin['id'],
+        "name"  => $admin['name'],
         "email" => $admin['email'],
-        "role" => "admin",
+        "role"  => "admin",
         "token" => $token
     ]);
 } else {
-    sendResponse(401, "Invalid email or password");
+    sendResponse(401, t('invalid_credentials'));
 }

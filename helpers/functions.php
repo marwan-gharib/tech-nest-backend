@@ -61,9 +61,9 @@ function sendResponse($status, $message, $data = null)
 {
     http_response_code($status);
     $response = [
-        "status" => $status,
+        "status"  => $status,
         "message" => $message,
-        "data" => $data ?? null,
+        "data"    => $data ?? null,
     ];
 
     foreach (["data"] as $key) {
@@ -72,13 +72,13 @@ function sendResponse($status, $message, $data = null)
         }
     }
 
-    $json = json_encode($response);
+    $json = json_encode($response, JSON_UNESCAPED_UNICODE);
     if ($json === false) {
         http_response_code(500);
         echo json_encode([
-            "status" => 500,
-            "message" => "JSON Encoding Error: " . json_last_error_msg()
-        ]);
+            "status"  => 500,
+            "message" => t('json_error') . ": " . json_last_error_msg()
+        ], JSON_UNESCAPED_UNICODE);
         exit;
     }
 
@@ -93,7 +93,7 @@ function validateToken($conn)
     $token = $headers['token'] ?? null;
 
     if (!$token) {
-        sendResponse(401, "Token required");
+        sendResponse(401, t('token_required'));
     }
 
     $stmt = $conn->prepare("SELECT * FROM users WHERE token = ? AND token_expiry > NOW() AND is_verified = 1");
@@ -101,7 +101,7 @@ function validateToken($conn)
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$user) {
-        sendResponse(401, "Invalid, expired token or account not verified");
+        sendResponse(401, t('invalid_token'));
     }
 
     return $user;
@@ -114,7 +114,7 @@ function validateAdminToken($conn)
     $authHeader = $headers['Token'] ?? null;
 
     if (!$authHeader) {
-        sendResponse(401, "Admin Token required");
+        sendResponse(401, t('admin_token_required'));
     }
 
     $token = str_replace('Bearer ', '', $authHeader);
@@ -124,7 +124,7 @@ function validateAdminToken($conn)
     $admin = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$admin) {
-        sendResponse(401, "Invalid or expired admin token");
+        sendResponse(401, t('invalid_admin_token'));
     }
 
     return $admin;
@@ -188,7 +188,7 @@ function sendVerificationEmail($email, $code)
 
         $mail->send();
     } catch (Exception $e) {
-        sendResponse(500, "Failed to send verification email");
+        sendResponse(500, t('verification_email_failed'));
     }
 }
 
@@ -250,7 +250,7 @@ function sendForgotPasswordEmail($email, $code)
 
         $mail->send();
     } catch (Exception $e) {
-        sendResponse(500, "Failed to send password reset email");
+        sendResponse(500, t('reset_email_failed'));
     }
 }
 
@@ -276,4 +276,32 @@ function isImageUsed($conn, $imagePath)
     if ($stmt->fetch()) return true;
 
     return false;
+}
+
+/**
+ * Upsert Arabic translation for a category.
+ * Falls back to English name if no Arabic is provided.
+ */
+function upsertCategoryTranslation($conn, int $category_id, string $name_ar): void
+{
+    $stmt = $conn->prepare(
+        "INSERT INTO categories_translations (category_id, lang, name)
+         VALUES (?, 'ar', ?)
+         ON DUPLICATE KEY UPDATE name = VALUES(name)"
+    );
+    $stmt->execute([$category_id, $name_ar]);
+}
+
+/**
+ * Upsert Arabic translation for a product.
+ * Falls back to English values if Arabic not provided.
+ */
+function upsertProductTranslation($conn, int $product_id, string $name_ar, string $description_ar): void
+{
+    $stmt = $conn->prepare(
+        "INSERT INTO products_translations (product_id, lang, name, description)
+         VALUES (?, 'ar', ?, ?)
+         ON DUPLICATE KEY UPDATE name = VALUES(name), description = VALUES(description)"
+    );
+    $stmt->execute([$product_id, $name_ar, $description_ar]);
 }

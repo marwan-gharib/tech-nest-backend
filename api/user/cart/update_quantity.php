@@ -6,25 +6,20 @@ $user = validateToken($conn);
 
 $data = json_decode(file_get_contents("php://input"), true);
 
-// ✅ Validate input
+// Validate input
 if (
     !isset($data['id']) || !is_numeric($data['id']) ||
     !isset($data['quantity']) || !is_numeric($data['quantity']) || $data['quantity'] <= 0
 ) {
-    sendResponse(400, "Invalid input", null, [
-        "id" => "Required",
-        "quantity" => "Must be a positive number"
-    ]);
+    sendResponse(400, t('quantity_invalid'));
 }
 
-$cartId = (int)$data['id'];
+$cartId       = (int)$data['id'];
 $requestedQty = (int)$data['quantity'];
 
 try {
-
-    // 🔍 Fetch cart item + stock
     $cartStmt = $conn->prepare(
-        "SELECT c.id, c.quantity as current_quantity, p.stock 
+        "SELECT c.id, c.quantity AS current_quantity, p.stock
          FROM cart c
          JOIN products p ON c.product_id = p.id
          WHERE c.id = ? AND c.user_id = ?
@@ -34,44 +29,41 @@ try {
     $item = $cartStmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$item) {
-        sendResponse(404, "Cart item not found", null, ["cart_item" => "Not found"]);
+        sendResponse(404, t('cart_item_not_found'));
     }
 
     $stock = (int)$item['stock'];
 
-    // ❌ لو المنتج out of stock → احذفه
     if ($stock <= 0) {
         $deleteStmt = $conn->prepare("DELETE FROM cart WHERE id = ?");
         $deleteStmt->execute([$cartId]);
 
-        sendResponse(200, "Item removed (out of stock)", [
-            "id" => $cartId,
+        sendResponse(200, t('cart_item_removed_oos'), [
+            "id"       => $cartId,
             "quantity" => 0,
-            "status" => "removed"
+            "status"   => "removed"
         ]);
     }
 
     $finalQty = $requestedQty;
-    $status = "updated";
+    $status   = "updated";
 
     if ($requestedQty > $stock) {
         $finalQty = $stock;
-        $status = "adjusted";
+        $status   = "adjusted";
     }
 
     $update = $conn->prepare("UPDATE cart SET quantity = ? WHERE id = ?");
     $update->execute([$finalQty, $cartId]);
 
-    sendResponse(200, "Cart updated successfully", [
-        "id" => $cartId,
-        "quantity" => $finalQty,
+    sendResponse(200, t('cart_updated'), [
+        "id"               => $cartId,
+        "quantity"         => $finalQty,
         "requested_quantity" => $requestedQty,
-        "available_stock" => $stock,
-        "status" => $status
+        "available_stock"  => $stock,
+        "status"           => $status
     ]);
 
 } catch (Exception $e) {
-    sendResponse(500, "Failed to update cart", null, [
-        "exception" => $e->getMessage()
-    ]);
+    sendResponse(500, t('cart_update_failed'));
 }

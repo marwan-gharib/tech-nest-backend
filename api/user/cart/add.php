@@ -3,35 +3,43 @@ include "../../../config/database.php";
 include "../../../helpers/functions.php";
 
 $user = validateToken($conn);
+$lang = getRequestedLang();
 
 $data = json_decode(file_get_contents("php://input"), true);
 
 if (!isset($data['quantity']) || !is_numeric($data['quantity']) || $data['quantity'] <= 0) {
-    sendResponse(400, "Quantity must be a positive number", null, ["quantity" => "Must be a positive number"]);
+    sendResponse(400, t('quantity_invalid'));
 }
 
 $productStmt = $conn->prepare(
-    "SELECT p.*, c.name as category_name, c.image_url as category_image 
-     FROM products p 
-     LEFT JOIN categories c ON p.category_id = c.id 
-     WHERE p.id = ? 
+    "SELECT
+        p.*,
+        COALESCE(pt.name, p.name)               AS name,
+        COALESCE(pt.description, p.description)  AS description,
+        c.name                                    AS category_name_en,
+        COALESCE(ct.name, c.name)                AS category_name,
+        c.image_url                               AS category_image
+     FROM products p
+     LEFT JOIN products_translations   pt ON pt.product_id  = p.id  AND pt.lang = ?
+     LEFT JOIN categories              c  ON c.id            = p.category_id
+     LEFT JOIN categories_translations ct ON ct.category_id = c.id  AND ct.lang = ?
+     WHERE p.id = ?
      LIMIT 1"
 );
-$productStmt->execute([$data['product_id']]);
+$productStmt->execute([$lang, $lang, $data['product_id']]);
 $product = $productStmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$product) {
-    sendResponse(404, "Product not found", null, ["product_id" => "Not found"]);
+    sendResponse(404, t('product_not_found'));
 }
 
-// Format product to include nested category
+// Format: nest category
 $product['category'] = [
-    "id" => $product['category_id'],
-    "name" => $product['category_name'],
+    "id"        => $product['category_id'],
+    "name"      => $product['category_name'],
     "image_url" => $product['category_image']
 ];
-unset($product['category_name']);
-unset($product['category_image']);
+unset($product['category_name'], $product['category_name_en'], $product['category_image']);
 
 $cartStmt = $conn->prepare(
     "SELECT id, quantity FROM cart WHERE user_id = ? AND product_id = ? LIMIT 1"
@@ -43,32 +51,28 @@ $requestedQty = (int)$data['quantity'];
 $totalQty     = $requestedQty;
 
 if ($totalQty > (int)$product['stock']) {
-    sendResponse(400, "Only {$product['stock']} items available", null, ["stock" => "Insufficient stock"]);
+    sendResponse(400, "Only {$product['stock']} items available");
 }
 
 if ($existing) {
-    $update = $conn->prepare(
-        "UPDATE cart SET quantity = ? WHERE id = ?"
-    );
+    $update = $conn->prepare("UPDATE cart SET quantity = ? WHERE id = ?");
     $update->execute([$totalQty, $existing['id']]);
 
-    sendResponse(200, "Cart updated successfully", [
-        "id" => $existing['id'],
+    sendResponse(200, t('cart_updated'), [
+        "id"         => $existing['id'],
         "product_id" => $data['product_id'],
-        "quantity" => $totalQty,
-        "product" => $product
+        "quantity"   => $totalQty,
+        "product"    => $product
     ]);
 } else {
-    $insert = $conn->prepare(
-        "INSERT INTO cart (user_id, product_id, quantity) VALUES (?, ?, ?)"
-    );
+    $insert = $conn->prepare("INSERT INTO cart (user_id, product_id, quantity) VALUES (?, ?, ?)");
     $insert->execute([$user['id'], $data['product_id'], $requestedQty]);
     $cart_id = $conn->lastInsertId();
 
-    sendResponse(201, "Item added to cart", [
-        "id" => $cart_id,
+    sendResponse(201, t('cart_item_added'), [
+        "id"         => $cart_id,
         "product_id" => $data['product_id'],
-        "quantity" => $requestedQty,
-        "product" => $product
+        "quantity"   => $requestedQty,
+        "product"    => $product
     ]);
 }

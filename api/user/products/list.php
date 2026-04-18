@@ -3,6 +3,7 @@ include "../../../config/database.php";
 include "../../../helpers/functions.php";
 
 $user = validateToken($conn);
+$lang = getRequestedLang();
 
 // ================= Pagination =================
 $limit = (isset($_GET['limit']) && is_numeric($_GET['limit']) && $_GET['limit'] > 0)
@@ -37,73 +38,70 @@ $order = strtoupper($_GET['order'] ?? 'ASC');
 $allowedSort  = ['name', 'price'];
 $allowedOrder = ['ASC', 'DESC'];
 
-// Fallback to defaults if provided values are invalid
-if (!in_array($sort, $allowedSort)) {
-  $sort = 'name';
-}
-if (!in_array($order, $allowedOrder)) {
-  $order = 'ASC';
-}
+if (!in_array($sort, $allowedSort))   $sort  = 'name';
+if (!in_array($order, $allowedOrder)) $order = 'ASC';
 
 // ================= Validation =================
 if ($min_price !== null && $max_price !== null && $min_price > $max_price) {
-  sendResponse(400, "Invalid price range", null, [
-    "min_price" => "Must be less than max_price"
-  ]);
+  sendResponse(400, t('invalid_price_range'));
 }
 
 try {
 
-  $where = [];
+  $where  = [];
   $params = [];
 
-  // ===== category filter =====
+  // category filter
   if ($category_id !== null) {
-    $where[] = "p.category_id = ?";
+    $where[]  = "p.category_id = ?";
     $params[] = $category_id;
   }
 
-  // ===== search filter =====
+  // search filter — searches both English and Arabic names
   if ($search !== null && $search !== '') {
-    $where[] = "(p.name LIKE ? OR p.description LIKE ?)";
+    $where[]  = "(p.name LIKE ? OR p.description LIKE ? OR pt.name LIKE ? OR pt.description LIKE ?)";
+    $params[] = "%$search%";
+    $params[] = "%$search%";
     $params[] = "%$search%";
     $params[] = "%$search%";
   }
 
-  // ===== price filter (optimized) =====
+  // price filter
   if ($min_price !== null && $max_price !== null) {
-    $where[] = "p.price BETWEEN ? AND ?";
+    $where[]  = "p.price BETWEEN ? AND ?";
     $params[] = $min_price;
     $params[] = $max_price;
   } else {
-    if ($min_price !== null) {
-      $where[] = "p.price >= ?";
-      $params[] = $min_price;
-    }
-
-    if ($max_price !== null) {
-      $where[] = "p.price <= ?";
-      $params[] = $max_price;
-    }
+    if ($min_price !== null) { $where[] = "p.price >= ?"; $params[] = $min_price; }
+    if ($max_price !== null) { $where[] = "p.price <= ?"; $params[] = $max_price; }
   }
 
   $where_sql = $where ? "WHERE " . implode(" AND ", $where) : "";
 
-  // ===== sorting =====
+  // sorting on localised name
   if ($sort === 'name') {
-    $sort_sql = "ORDER BY LOWER(p.name) $order";
+    $sort_sql = "ORDER BY LOWER(COALESCE(pt.name, p.name)) $order";
   } else {
     $sort_sql = "ORDER BY p.$sort $order";
   }
 
   // ================= Main Query =================
-  $sql = "SELECT p.*, c.name as category_name 
-          FROM products p 
-          LEFT JOIN categories c ON p.category_id = c.id 
+  $sql = "SELECT
+              p.*,
+              COALESCE(pt.name, p.name)               AS name,
+              COALESCE(pt.description, p.description)  AS description,
+              c.name                                    AS category_name_en,
+              COALESCE(ct.name, c.name)                AS category_name
+          FROM products p
+          LEFT JOIN products_translations   pt ON pt.product_id  = p.id  AND pt.lang = ?
+          LEFT JOIN categories              c  ON c.id            = p.category_id
+          LEFT JOIN categories_translations ct ON ct.category_id = c.id  AND ct.lang = ?
           $where_sql $sort_sql LIMIT ? OFFSET ?";
+
   $stmt = $conn->prepare($sql);
 
-  $allParams = array_merge($params, [$limit, $offset]);
+  // First two params are the two lang bindings, then filters, then limit/offset
+  $allParams = array_merge([$lang, $lang], $params, [$limit, $offset]);
 
   foreach ($allParams as $index => $param) {
     if (is_int($param)) {
@@ -116,17 +114,16 @@ try {
   $stmt->execute();
   $products_data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-  // Format products to include nested category
+  // Format: nest category, strip raw columns
   $products = array_map(function($product) {
-    $category_id = $product['category_id'] !== null ? (int)$product['category_id'] : null;
-    $category_name = $product['category_name'];
+    $cat_id   = $product['category_id'] !== null ? (int)$product['category_id'] : null;
+    $cat_name = $product['category_name'];
 
-    unset($product['category_id']);
-    unset($product['category_name']);
+    unset($product['category_id'], $product['category_name'], $product['category_name_en']);
 
     $product['category'] = [
-      "id" => $category_id,
-      "name" => $category_name,
+      "id"        => $cat_id,
+      "name"      => $cat_name,
       "image_url" => ""
     ];
 
@@ -134,10 +131,14 @@ try {
   }, $products_data);
 
   // ================= Count Query =================
-  $count_sql = "SELECT COUNT(*) FROM products p $where_sql";
+  $count_sql = "SELECT COUNT(*)
+                FROM products p
+                LEFT JOIN products_translations pt ON pt.product_id = p.id AND pt.lang = ?
+                $where_sql";
   $count_stmt = $conn->prepare($count_sql);
 
-  foreach ($params as $index => $param) {
+  $countParams = array_merge([$lang], $params);
+  foreach ($countParams as $index => $param) {
     if (is_int($param)) {
       $count_stmt->bindValue($index + 1, $param, PDO::PARAM_INT);
     } else {
@@ -150,7 +151,7 @@ try {
 
   // ================= Response =================
   $response = [
-    "products" => $products,
+    "products"   => $products,
     "pagination" => [
       "total" => (int)$total,
       "page"  => $page,
@@ -159,9 +160,7 @@ try {
     ]
   ];
 
-  sendResponse(200, "Products retrieved successfully", $response);
+  sendResponse(200, t('products_retrieved'), $response);
 } catch (Exception $e) {
-  sendResponse(500, "Failed to retrieve products", null, [
-    "error" => $e->getMessage()
-  ]);
+  sendResponse(500, t('products_failed'));
 }

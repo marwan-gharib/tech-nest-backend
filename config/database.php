@@ -1,10 +1,18 @@
 <?php
 // Set the content type to JSON
-header("Content-Type: application/json");
+header("Content-Type: application/json; charset=utf-8");
 header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type");
+header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, token, Token, Authorization, lang, Accept-Language");
 
+// Handle preflight OPTIONS request
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
+
+// Load language helper first (must be before functions.php)
+require_once __DIR__ . "/../helpers/lang.php";
 
 $db_host = 'localhost';
 $db_name = 'ecommerce_db';
@@ -21,8 +29,8 @@ try {
 } catch (PDOException $e) {
     http_response_code(500);
     echo json_encode([
-        "status" => 500,
-        "message" => "Database connection failed"
+        "status"  => 500,
+        "message" => t('database_error')
     ]);
     exit;
 }

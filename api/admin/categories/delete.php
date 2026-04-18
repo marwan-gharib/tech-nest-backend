@@ -6,10 +6,11 @@ $data = json_decode(file_get_contents("php://input"), true);
 
 $admin = validateAdminToken($conn);
 
-$stmt = $conn->prepare("SELECT image_url FROM categories WHERE id = ? LIMIT 1");
 if (!$data || !isset($data['id']) || empty($data['id'])) {
-    sendResponse(400, "Category id is required");
+    sendResponse(400, t('category_id_required'));
 }
+
+$stmt = $conn->prepare("SELECT image_url FROM categories WHERE id = ? LIMIT 1");
 $stmt->execute([$data['id']]);
 $imagePath = $stmt->fetchColumn();
 
@@ -18,7 +19,7 @@ try {
     $delete->execute([$data['id']]);
 
     if ($delete->rowCount() === 0) {
-        sendResponse(404, "Category not found");
+        sendResponse(404, t('category_not_found'));
     }
 
     if ($imagePath && !isImageUsed($conn, $imagePath)) {
@@ -28,7 +29,7 @@ try {
         }
     }
 
-    sendResponse(200, "Category deleted successfully");
+    sendResponse(200, t('category_deleted'));
 } catch (Exception $e) {
-    sendResponse(500, "Failed to delete category");
+    sendResponse(500, t('category_delete_failed'));
 }

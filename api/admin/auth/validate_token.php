@@ -4,4 +4,4 @@ include "../../../helpers/functions.php";
 
 $admin = validateAdminToken($conn);
 
-sendResponse(200, "Token is valid");
+sendResponse(200, t('token_valid'));
