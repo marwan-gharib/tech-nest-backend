@@ -23,6 +23,9 @@ echo json_encode([
                 "Add" => "api/admin/categories/add.php",
                 "Update" => "api/admin/categories/update.php",
                 "Delete" => "api/admin/categories/delete.php"
+            ],
+            "Orders" => [
+                "Update Status" => "api/admin/orders/update_status.php"
             ]
         ],
         "User" => [
@@ -45,6 +48,12 @@ echo json_encode([
                 "List" => "api/user/cart/list.php",
                 "Update Quantity" => "api/user/cart/update_quantity.php",
                 "Remove" => "api/user/cart/remove.php"
+            ],
+            "Orders" => [
+                "Create" => "api/user/orders/create.php",
+                "List" => "api/user/orders/list.php",
+                "Details" => "api/user/orders/details.php",
+                "Cancel" => "api/user/orders/cancel.php"
             ]
         ]
     ]

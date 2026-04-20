@@ -145,6 +145,19 @@ function t(string $key, string $lang = null): string
             'suggestions_retrieved'  => 'Suggestions retrieved successfully',
             'no_suggestions'         => 'No suggestions found',
             'suggestions_failed'     => 'Failed to fetch suggestions',
+
+            // --- Orders ---
+            'order_created'          => 'Order created successfully',
+            'order_not_found'        => 'Order not found',
+            'orders_retrieved'       => 'Orders retrieved successfully',
+            'orders_failed'          => 'Failed to retrieve orders',
+            'order_cancelled'        => 'Order cancelled successfully',
+            'order_cancel_failed'    => 'Failed to cancel order, or it belongs to a past status',
+            'order_status_updated'   => 'Order status updated successfully',
+            'invalid_order_status'   => 'Invalid order status',
+            'cart_empty'             => 'Your cart is empty',
+            'insufficient_stock'     => 'Insufficient stock for some products in your cart',
+            'addresses_required'     => 'Shipping and billing addresses are required',
         ],
 
         /* ==================== ARABIC ==================== */
@@ -241,6 +254,19 @@ function t(string $key, string $lang = null): string
             'suggestions_retrieved'  => 'تم استرجاع الاقتراحات بنجاح',
             'no_suggestions'         => 'لا توجد اقتراحات',
             'suggestions_failed'     => 'فشل جلب الاقتراحات',
+
+            // --- Orders ---
+            'order_created'          => 'تم إنشاء الطلب بنجاح',
+            'order_not_found'        => 'الطلب غير موجود',
+            'orders_retrieved'       => 'تم استرجاع الطلبات بنجاح',
+            'orders_failed'          => 'فشل استرجاع الطلبات',
+            'order_cancelled'        => 'تم إلغاء الطلب بنجاح',
+            'order_cancel_failed'    => 'فشل إلغاء الطلب، أو أن حالته لا تسمح بالإلغاء',
+            'order_status_updated'   => 'تم تحديث حالة الطلب بنجاح',
+            'invalid_order_status'   => 'حالة الطلب غير صالحة',
+            'cart_empty'             => 'عربة التسوق فارغة',
+            'insufficient_stock'     => 'كمية المخزون غير كافية لبعض المنتجات في السلة',
+            'addresses_required'     => 'عناوين الشحن والفواتير مطلوبة',
         ],
     ];
 
