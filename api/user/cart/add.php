@@ -11,22 +11,26 @@ if (!isset($data['quantity']) || !is_numeric($data['quantity']) || $data['quanti
     sendResponse(400, t('quantity_invalid'));
 }
 
+$name_col      = ($lang === 'ar') ? "COALESCE(pt.name, p.name)" : "p.name";
+$desc_col      = ($lang === 'ar') ? "COALESCE(pt.description, p.description)" : "p.description";
+$cat_name_col  = ($lang === 'ar') ? "COALESCE(ct.name, c.name)" : "c.name";
+
 $productStmt = $conn->prepare(
     "SELECT
         p.*,
-        COALESCE(pt.name, p.name)               AS name,
-        COALESCE(pt.description, p.description)  AS description,
-        c.name                                    AS category_name_en,
-        COALESCE(ct.name, c.name)                AS category_name,
-        c.image_url                               AS category_image
+        $name_col               AS name,
+        $desc_col               AS description,
+        c.name                  AS category_name_en,
+        $cat_name_col           AS category_name,
+        c.image_url             AS category_image
      FROM products p
-     LEFT JOIN products_translations   pt ON pt.product_id  = p.id  AND pt.lang = ?
+     LEFT JOIN products_translations   pt ON pt.product_id  = p.id
      LEFT JOIN categories              c  ON c.id            = p.category_id
-     LEFT JOIN categories_translations ct ON ct.category_id = c.id  AND ct.lang = ?
+     LEFT JOIN categories_translations ct ON ct.category_id = c.id
      WHERE p.id = ?
      LIMIT 1"
 );
-$productStmt->execute([$lang, $lang, $data['product_id']]);
+$productStmt->execute([$data['product_id']]);
 $product = $productStmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$product) {

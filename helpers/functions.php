@@ -285,8 +285,8 @@ function isImageUsed($conn, $imagePath)
 function upsertCategoryTranslation($conn, int $category_id, string $name_ar): void
 {
     $stmt = $conn->prepare(
-        "INSERT INTO categories_translations (category_id, lang, name)
-         VALUES (?, 'ar', ?)
+        "INSERT INTO categories_translations (category_id, name)
+         VALUES (?, ?)
          ON DUPLICATE KEY UPDATE name = VALUES(name)"
     );
     $stmt->execute([$category_id, $name_ar]);
@@ -299,8 +299,8 @@ function upsertCategoryTranslation($conn, int $category_id, string $name_ar): vo
 function upsertProductTranslation($conn, int $product_id, string $name_ar, string $description_ar): void
 {
     $stmt = $conn->prepare(
-        "INSERT INTO products_translations (product_id, lang, name, description)
-         VALUES (?, 'ar', ?, ?)
+        "INSERT INTO products_translations (product_id, name, description)
+         VALUES (?, ?, ?)
          ON DUPLICATE KEY UPDATE name = VALUES(name), description = VALUES(description)"
     );
     $stmt->execute([$product_id, $name_ar, $description_ar]);

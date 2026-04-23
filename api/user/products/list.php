@@ -78,9 +78,13 @@ try {
 
   $where_sql = $where ? "WHERE " . implode(" AND ", $where) : "";
 
+  $name_col      = ($lang === 'ar') ? "COALESCE(pt.name, p.name)" : "p.name";
+  $desc_col      = ($lang === 'ar') ? "COALESCE(pt.description, p.description)" : "p.description";
+  $cat_name_col  = ($lang === 'ar') ? "COALESCE(ct.name, c.name)" : "c.name";
+
   // sorting on localised name
   if ($sort === 'name') {
-    $sort_sql = "ORDER BY LOWER(COALESCE(pt.name, p.name)) $order";
+    $sort_sql = "ORDER BY LOWER($name_col) $order";
   } else {
     $sort_sql = "ORDER BY p.$sort $order";
   }
@@ -88,20 +92,20 @@ try {
   // ================= Main Query =================
   $sql = "SELECT
               p.*,
-              COALESCE(pt.name, p.name)               AS name,
-              COALESCE(pt.description, p.description)  AS description,
-              c.name                                    AS category_name_en,
-              COALESCE(ct.name, c.name)                AS category_name
+              $name_col               AS name,
+              $desc_col               AS description,
+              c.name                  AS category_name_en,
+              $cat_name_col           AS category_name
           FROM products p
-          LEFT JOIN products_translations   pt ON pt.product_id  = p.id  AND pt.lang = ?
+          LEFT JOIN products_translations   pt ON pt.product_id  = p.id
           LEFT JOIN categories              c  ON c.id            = p.category_id
-          LEFT JOIN categories_translations ct ON ct.category_id = c.id  AND ct.lang = ?
+          LEFT JOIN categories_translations ct ON ct.category_id = c.id
           $where_sql $sort_sql LIMIT ? OFFSET ?";
 
   $stmt = $conn->prepare($sql);
 
-  // First two params are the two lang bindings, then filters, then limit/offset
-  $allParams = array_merge([$lang, $lang], $params, [$limit, $offset]);
+  // Filters, then limit/offset
+  $allParams = array_merge($params, [$limit, $offset]);
 
   foreach ($allParams as $index => $param) {
     if (is_int($param)) {
@@ -133,11 +137,11 @@ try {
   // ================= Count Query =================
   $count_sql = "SELECT COUNT(*)
                 FROM products p
-                LEFT JOIN products_translations pt ON pt.product_id = p.id AND pt.lang = ?
+                LEFT JOIN products_translations pt ON pt.product_id = p.id
                 $where_sql";
   $count_stmt = $conn->prepare($count_sql);
 
-  $countParams = array_merge([$lang], $params);
+  $countParams = $params;
   foreach ($countParams as $index => $param) {
     if (is_int($param)) {
       $count_stmt->bindValue($index + 1, $param, PDO::PARAM_INT);

@@ -6,26 +6,30 @@ $user = validateToken($conn);
 $lang = getRequestedLang();
 
 try {
+    $name_col = ($lang === 'ar') ? "COALESCE(pt.name, p.name)" : "p.name";
+    $desc_col = ($lang === 'ar') ? "COALESCE(pt.description, p.description)" : "p.description";
+    $cat_name_col = ($lang === 'ar') ? "COALESCE(ct.name, cat.name)" : "cat.name";
+
     $stmt = $conn->prepare("
         SELECT
             c.id         AS cart_id,
             c.quantity,
             p.id         AS product_id,
-            COALESCE(pt.name, p.name)              AS name,
+            $name_col              AS name,
             p.price,
-            COALESCE(pt.description, p.description) AS description,
+            $desc_col AS description,
             p.image_url,
             p.category_id,
             p.stock,
-            COALESCE(ct.name, cat.name)            AS category_name
+            $cat_name_col            AS category_name
         FROM cart c
         JOIN products p ON c.product_id = p.id
-        LEFT JOIN products_translations   pt  ON pt.product_id  = p.id   AND pt.lang  = ?
+        LEFT JOIN products_translations   pt  ON pt.product_id  = p.id
         LEFT JOIN categories              cat ON cat.id          = p.category_id
-        LEFT JOIN categories_translations ct  ON ct.category_id = cat.id AND ct.lang  = ?
+        LEFT JOIN categories_translations ct  ON ct.category_id = cat.id
         WHERE c.user_id = ?
     ");
-    $stmt->execute([$lang, $lang, $user['id']]);
+    $stmt->execute([$user['id']]);
     $cartData = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     $cartItems    = [];

@@ -26,19 +26,21 @@ try {
         sendResponse(404, t('order_not_found'));
     }
 
+    $name_col = ($lang === 'ar') ? "COALESCE(pt.name, p.name)" : "p.name";
+
     // 2. Fetch Order Items with product translations
     $itemsStmt = $conn->prepare("
         SELECT 
             oi.id as order_item_id, oi.quantity, oi.price_at_purchase as price,
             p.id as product_id, 
-            COALESCE(pt.name, p.name) as name, 
+            $name_col as name, 
             p.image_url
         FROM order_items oi
         JOIN products p ON oi.product_id = p.id
-        LEFT JOIN products_translations pt ON pt.product_id = p.id AND pt.lang = ?
+        LEFT JOIN products_translations pt ON pt.product_id = p.id
         WHERE oi.order_id = ?
     ");
-    $itemsStmt->execute([$lang, $order_id]);
+    $itemsStmt->execute([$order_id]);
     $items = $itemsStmt->fetchAll(PDO::FETCH_ASSOC);
 
     $order['items'] = $items;

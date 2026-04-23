@@ -18,17 +18,19 @@ if (strlen($q) < 2) {
 $q = htmlspecialchars($q, ENT_QUOTES, 'UTF-8');
 
 try {
+    $name_col = ($lang === 'ar') ? "COALESCE(pt.name, p.name)" : "p.name";
+
     // Search in both English and translated names; return localised name
     $stmt = $conn->prepare("
-        SELECT DISTINCT COALESCE(pt.name, p.name) AS name
+        SELECT DISTINCT $name_col AS name
         FROM products p
-        LEFT JOIN products_translations pt ON pt.product_id = p.id AND pt.lang = ?
+        LEFT JOIN products_translations pt ON pt.product_id = p.id
         WHERE p.name LIKE ? OR pt.name LIKE ?
-        ORDER BY COALESCE(pt.name, p.name) ASC
+        ORDER BY $name_col ASC
         LIMIT 10
     ");
 
-    $stmt->execute([$lang, "%$q%", "%$q%"]);
+    $stmt->execute(["%$q%", "%$q%"]);
 
     $results = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
