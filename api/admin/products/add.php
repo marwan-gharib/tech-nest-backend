@@ -57,6 +57,28 @@ try {
     // Sync Arabic translation
     upsertProductTranslation($conn, $product_id, $name_ar, $description_ar);
 
+    // --- NEW FCM LOGIC ---
+    try {
+        require_once "../../../helpers/FCMService.php";
+        $fcm = new FCMService($conn);
+        
+        // Get all users who have a valid FCM token
+        $stmtUsers = $conn->query("SELECT id, fcm_token FROM users WHERE fcm_token IS NOT NULL AND fcm_token != ''");
+        $users = $stmtUsers->fetchAll(PDO::FETCH_ASSOC);
+
+        if (!empty($users)) {
+            $fcm->sendToMultipleUsers($users, [
+                'title' => 'New Product Added',
+                'body' => "Check out our new product: $name",
+                'type' => 'product',
+                'data' => ['product_id' => (string)$product_id] // FCM data expects strings
+            ]);
+        }
+    } catch (Exception $e) {
+        // Silently ignore notification failure so the product is still added
+    }
+    // --- END FCM LOGIC ---
+
     sendResponse(201, t('product_added'), [
         "id"             => $product_id,
         "name"           => $name,
