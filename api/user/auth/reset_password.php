@@ -30,22 +30,29 @@ try {
     $update = $conn->prepare("UPDATE users SET `password` = ?, verification_code = NULL, code_expires_at = NULL WHERE id = ?");
     $update->execute([$newHashedPassword, $user['id']]);
 
-    // --- NEW FCM LOGIC ---
+    // --- FCM NOTIFICATION ---
     try {
-        if (!empty($user['fcm_token'])) {
-            require_once "../../../helpers/FCMService.php";
-            $fcm = new FCMService($conn);
-            $fcm->sendToUser($user['id'], $user['fcm_token'], [
-                'title' => 'Security Alert',
-                'body' => 'Your password was recently reset. If this was not you, please contact support immediately.',
-                'type' => 'security',
-                'data' => [] 
-            ]);
-        }
+        require_once "../../../helpers/FCMService.php";
+        $fcm = new FCMService($conn);
+
+        $fcm->sendNotification(
+            [
+                'notification' => [
+                    'title' => 'Security Alert 🔐',
+                    'body'  => 'Your password was recently reset. If this was not you, contact support immediately.',
+                ],
+                'data' => [
+                    'type'   => 'RESET_PASSWORD',
+                    'entity' => ['type' => 'RESET_PASSWORD', 'id' => (int)$user['id']],
+                    'extra'  => [],
+                ],
+            ],
+            ['type' => 'single', 'user_ids' => [(int)$user['id']]]
+        );
     } catch (Exception $e) {
-        // Silently ignore notification failure
+        // Silently ignore notification failure — password is already reset
     }
-    // --- END FCM LOGIC ---
+    // --- END FCM NOTIFICATION ---
 
     sendResponse(200, t('password_reset_success'), ["user_id" => $user['id']]);
 } catch (Exception $e) {

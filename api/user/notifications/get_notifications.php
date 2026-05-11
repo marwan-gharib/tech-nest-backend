@@ -43,7 +43,7 @@ try {
         }
     }
 
-    sendResponse(200, "Notifications fetched successfully", [
+    sendResponse(200, t('notifications_fetched'), [
         'notifications' => $notifications,
         'pagination' => [
             'total' => $total,
@@ -53,5 +53,5 @@ try {
         ]
     ]);
 } catch (PDOException $e) {
-    sendResponse(500, t('database_error' . $e->getMessage()));
+    sendResponse(500, t('database_error'));
 }

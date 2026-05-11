@@ -57,6 +57,7 @@ function t(string $key, string $lang = null): string
             // --- General ---
             'database_error'         => 'Database connection failed',
             'json_error'             => 'JSON Encoding Error',
+            'method_not_allowed'     => 'Method not allowed',
             'invalid_input'          => 'Invalid input',
             'all_fields_required'    => 'All fields are required',
             'invalid_image_type'     => 'Invalid image type',
@@ -65,6 +66,7 @@ function t(string $key, string $lang = null): string
             'image_too_large'        => 'Image size too large (max 2MB)',
             'invalid_image_file'     => 'Uploaded file is not a valid image',
             'logout_failed'          => 'Failed to logout',
+            'only_items_available'   => 'Only {count} items available',
 
             // --- Auth (shared) ---
             'token_required'         => 'Token required',
@@ -122,6 +124,9 @@ function t(string $key, string $lang = null): string
             'product_update_failed'  => 'Failed to update product',
             'product_delete_failed'  => 'Failed to delete product',
             'invalid_price_range'    => 'Invalid price range',
+            'invalid_id'             => 'Invalid ID provided',
+            'product_retrieved'      => 'Product retrieved successfully',
+            'error_fetching_product' => 'Error occurred while fetching product details',
 
             // --- Cart ---
             'cart_retrieved'         => 'Cart items retrieved successfully',
@@ -158,6 +163,24 @@ function t(string $key, string $lang = null): string
             'cart_empty'             => 'Your cart is empty',
             'insufficient_stock'     => 'Insufficient stock for some products in your cart',
             'addresses_required'     => 'Shipping and billing addresses are required',
+
+            // --- Order Status Labels ---
+            'pending'                => 'Pending',
+            'confirmed'              => 'Confirmed',
+            'shipped'                => 'Shipped',
+            'delivered'              => 'Delivered',
+            'cancelled'              => 'Cancelled',
+
+            // --- Notifications ---
+            'notifications_fetched'  => 'Notifications fetched successfully',
+            'notifications_marked_read' => 'Notification(s) marked as read',
+            'fcm_token_required'     => 'FCM token is required',
+            'fcm_token_saved'        => 'FCM token saved successfully',
+            'user_id_required'       => 'user_id is required',
+            'order_notification_sent' => 'Order notification sent',
+            'broadcast_notification_sent' => 'Broadcast notification sent',
+            'multiple_users_notification_sent' => 'Multiple users notification sent',
+            'invalid_action'         => 'Invalid action. Use: order_update, new_product, or promo_multiple',
         ],
 
         /* ==================== ARABIC ==================== */
@@ -166,6 +189,7 @@ function t(string $key, string $lang = null): string
             // --- General ---
             'database_error'         => 'فشل الاتصال بقاعدة البيانات',
             'json_error'             => 'خطأ في ترميز JSON',
+            'method_not_allowed'     => 'الطريقة غير مسموحة',
             'invalid_input'          => 'مدخلات غير صالحة',
             'all_fields_required'    => 'جميع الحقول مطلوبة',
             'invalid_image_type'     => 'نوع الصورة غير مدعوم',
@@ -174,6 +198,7 @@ function t(string $key, string $lang = null): string
             'image_too_large'        => 'حجم الصورة كبير جدًا (الحد الأقصى 2 ميجابايت)',
             'invalid_image_file'     => 'الملف المرفوع ليس صورة صالحة',
             'logout_failed'          => 'فشل تسجيل الخروج',
+            'only_items_available'   => 'متاح فقط {count} قطعة',
 
             // --- Auth (shared) ---
             'token_required'         => 'الرمز المميز مطلوب',
@@ -267,9 +292,39 @@ function t(string $key, string $lang = null): string
             'cart_empty'             => 'عربة التسوق فارغة',
             'insufficient_stock'     => 'كمية المخزون غير كافية لبعض المنتجات في السلة',
             'addresses_required'     => 'عناوين الشحن والفواتير مطلوبة',
+            'invalid_id'             => 'المعرف المقدم غير صالح',
+            'product_retrieved'      => 'تم استرجاع المنتج بنجاح',
+            'error_fetching_product' => 'حدث خطأ أثناء جلب تفاصيل المنتج',
+
+            // --- Order Status Labels ---
+            'pending'                => 'قيد الانتظار',
+            'confirmed'              => 'تم التأكيد',
+            'shipped'                => 'تم الشحن',
+            'delivered'              => 'تم التسليم',
+            'cancelled'              => 'ملغي',
+
+            // --- Notifications ---
+            'notifications_fetched'  => 'تم جلب الإشعارات بنجاح',
+            'notifications_marked_read' => 'تم تعليم الإشعار(ات) كمقروءة',
+            'fcm_token_required'     => 'رمز FCM مطلوب',
+            'fcm_token_saved'        => 'تم حفظ رمز FCM بنجاح',
+            'user_id_required'       => 'معرّف المستخدم مطلوب',
+            'order_notification_sent' => 'تم إرسال إشعار الطلب',
+            'broadcast_notification_sent' => 'تم إرسال إشعار جماعي',
+            'multiple_users_notification_sent' => 'تم إرسال إشعار لعدة مستخدمين',
+            'invalid_action'         => 'إجراء غير صالح. استخدم: order_update أو new_product أو promo_multiple',
         ],
     ];
 
-    // Fallback: unknown lang → English; unknown key → return the key itself
-    return $messages[$lang][$key] ?? $messages['en'][$key] ?? $key;
+    $message = $messages[$lang][$key] ?? $messages['en'][$key] ?? $key;
+
+    $args = func_get_args();
+    $replacements = $args[2] ?? [];
+    if (is_array($replacements) && $replacements) {
+        foreach ($replacements as $placeholder => $value) {
+            $message = str_replace('{' . $placeholder . '}', (string)$value, $message);
+        }
+    }
+
+    return $message;
 }

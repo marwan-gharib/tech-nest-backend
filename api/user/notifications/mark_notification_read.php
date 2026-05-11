@@ -22,7 +22,7 @@ try {
         $stmt->execute([$user['id']]);
     }
 
-    sendResponse(200, "Notification(s) marked as read");
+    sendResponse(200, t('notifications_marked_read'));
 } catch (PDOException $e) {
     sendResponse(500, t('database_error'));
 }

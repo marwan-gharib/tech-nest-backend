@@ -31,6 +31,6 @@ try {
     echo json_encode([
         "status"  => 500,
         "message" => t('database_error')
-    ]);
+    ], JSON_UNESCAPED_UNICODE);
     exit;
 }

@@ -42,25 +42,38 @@ try {
     $updateStmt = $conn->prepare("UPDATE orders SET status = ? WHERE id = ?");
     $updateStmt->execute([$status, $order_id]);
 
-    // --- NEW FCM LOGIC ---
+    // --- FCM NOTIFICATION ---
     try {
-        if (!empty($orderData['fcm_token'])) {
-            require_once "../../../helpers/FCMService.php";
-            $fcm = new FCMService($conn);
-            $fcm->sendToUser($orderData['user_id'], $orderData['fcm_token'], [
-                'title' => 'Order Status Updated',
-                'body' => "Your order #$order_id is now $status.",
-                'type' => 'order',
+        require_once "../../../helpers/FCMService.php";
+        $fcm = new FCMService($conn);
+
+        $statusLabels = [
+            'pending'   => t('pending'),
+            'confirmed' => t('confirmed'),
+            'shipped'   => t('shipped'),
+            'delivered' => t('delivered'),
+            'cancelled' => t('cancelled'),
+        ];
+        $statusLabel = $statusLabels[$status] ?? ucfirst($status);
+
+        $fcm->sendNotification(
+            [
+                'notification' => [
+                    'title' => "Order #$order_id — $statusLabel",
+                    'body'  => "Your order status has been updated to: $status.",
+                ],
                 'data' => [
-                    'order_id' => (string)$order_id,
-                    'status' => $status
-                ]
-            ]);
-        }
+                    'type'   => 'ORDER',
+                    'entity' => ['type' => 'ORDER', 'id' => $order_id],
+                    'extra'  => ['status' => $status],
+                ],
+            ],
+            ['type' => 'single', 'user_ids' => [$orderData['user_id']]]
+        );
     } catch (Exception $e) {
-        // Silently ignore notification failure
+        // Silently ignore notification failure — order update is already committed
     }
-    // --- END FCM LOGIC ---
+    // --- END FCM NOTIFICATION ---
 
     sendResponse(200, t('order_status_updated'), [
         "order_id" => $order_id,

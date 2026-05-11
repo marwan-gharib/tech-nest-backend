@@ -4,7 +4,7 @@ include "../../../helpers/functions.php";
 include "../../../helpers/FCMService.php";
 
 // This file serves as an example of how to trigger notifications from your backend events
-// In a real application, you would call these functions within your order/cart logic.
+// Using the new standardized payload and unified targeting system.
 
 $admin = validateAdminToken($conn);
 $fcm = new FCMService($conn);
@@ -17,67 +17,89 @@ switch ($action) {
         $orderId = $_GET['order_id'] ?? '12345';
         $status = $_GET['status'] ?? 'Shipped';
 
-        if (!$userId) sendResponse(400, "user_id is required");
+        if (!$userId) sendResponse(400, t('user_id_required'));
 
-        // 1. Get user's FCM token
-        $stmt = $conn->prepare("SELECT fcm_token FROM users WHERE id = ?");
-        $stmt->execute([$userId]);
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if ($user && !empty($user['fcm_token'])) {
-            $payload = [
-                'title' => "Order #$orderId Update",
-                'body' => "Your order status has been updated to: $status",
-                'type' => 'order_update',
-                'data' => [
-                    'order_id' => $orderId,
-                    'status' => $status
-                ]
-            ];
-            $result = $fcm->sendToUser($userId, $user['fcm_token'], $payload);
-            sendResponse(200, "Order notification sent", $result);
-        } else {
-            sendResponse(404, "User or FCM token not found");
-        }
-        break;
-
-    case 'cart_reminder':
-        $userId = $_GET['user_id'] ?? null;
-        if (!$userId) sendResponse(400, "user_id is required");
-
-        $stmt = $conn->prepare("SELECT fcm_token FROM users WHERE id = ?");
-        $stmt->execute([$userId]);
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if ($user && !empty($user['fcm_token'])) {
-            $payload = [
-                'title' => "Complete Your Purchase! 🛒",
-                'body' => "You still have items in your cart. Checkout now before they're gone!",
-                'type' => 'cart_reminder',
-                'data' => [
-                    'screen' => 'cart'
-                ]
-            ];
-            $result = $fcm->sendToUser($userId, $user['fcm_token'], $payload);
-            sendResponse(200, "Cart reminder sent", $result);
-        }
-        break;
-
-    case 'promo_topic':
-        $topic = $_GET['topic'] ?? 'all_users';
         $payload = [
-            'title' => "Flash Sale! ⚡",
-            'body' => "Get 50% OFF on all electronics today only!",
-            'type' => 'promo',
-            'data' => [
-                'promo_code' => 'TECH50',
-                'category' => 'electronics'
+            "notification" => [
+                "title" => "Order #$orderId Update",
+                "body" => "Your order status has been updated to: $status"
+            ],
+            "data" => [
+                "type" => "ORDER_UPDATE",
+                "entity" => [
+                    "type" => "order",
+                    "id" => (int)$orderId
+                ],
+                "extra" => [
+                    "status" => $status
+                ]
             ]
         ];
-        $result = $fcm->sendToTopic($topic, $payload);
-        sendResponse(200, "Topic notification sent", $result);
+
+        $target = [
+            "type" => "single",
+            "user_ids" => [(int)$userId]
+        ];
+
+        $result = $fcm->sendNotification($payload, $target);
+        sendResponse(200, t('order_notification_sent'), $result);
+        break;
+
+    case 'new_product':
+        $productId = $_GET['product_id'] ?? 10;
+        
+        $payload = [
+            "notification" => [
+                "title" => "منتج جديد 🔥",
+                "body" => "اضغط تشوف المنتج"
+            ],
+            "data" => [
+                "type" => "NEW_PRODUCT",
+                "entity" => [
+                    "type" => "product",
+                    "id" => (int)$productId
+                ],
+                "extra" => []
+            ]
+        ];
+
+        $target = [
+            "type" => "all"
+        ];
+
+        $result = $fcm->sendNotification($payload, $target);
+        sendResponse(200, t('broadcast_notification_sent'), $result);
+        break;
+
+    case 'promo_multiple':
+        $userIds = isset($_GET['user_ids']) ? explode(',', $_GET['user_ids']) : [1, 2];
+
+        $payload = [
+            "notification" => [
+                "title" => "Special Offer! ⚡",
+                "body" => "Exclusive discount just for you!"
+            ],
+            "data" => [
+                "type" => "PROMO",
+                "entity" => [
+                    "type" => "promotion",
+                    "id" => 0
+                ],
+                "extra" => [
+                    "discount" => "20%"
+                ]
+            ]
+        ];
+
+        $target = [
+            "type" => "multiple",
+            "user_ids" => array_map('intval', $userIds)
+        ];
+
+        $result = $fcm->sendNotification($payload, $target);
+        sendResponse(200, t('multiple_users_notification_sent'), $result);
         break;
 
     default:
-        sendResponse(400, "Invalid action. Use: order_update, cart_reminder, or promo_topic");
+        sendResponse(400, t('invalid_action'));
 }

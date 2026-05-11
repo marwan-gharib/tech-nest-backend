@@ -70,7 +70,7 @@ class FCMService
     }
 
     /**
-     * Store the notification in the database
+     * Store the notification in the database (un-stringified data)
      */
     private function storeNotification($userId, $payload)
     {
@@ -81,12 +81,39 @@ class FCMService
             VALUES (?, ?, ?, ?, ?, NOW())
         ");
         
-        $title = $payload['title'] ?? '';
-        $body = $payload['body'] ?? '';
-        $type = $payload['type'] ?? 'system';
+        $title = $payload['notification']['title'] ?? '';
+        $body  = $payload['notification']['body'] ?? '';
+        $type  = $payload['data']['type'] ?? 'system';
+        
+        // Store the data part as JSON
         $data = isset($payload['data']) ? json_encode($payload['data']) : null;
 
         $stmt->execute([$userId, $title, $body, $type, $data]);
+    }
+
+    /**
+     * Formats the payload for FCM requirements (map<string, string>)
+     */
+    private function formatPayloadForFCM($payload)
+    {
+        $message = [
+            'notification' => [
+                'title' => $payload['notification']['title'] ?? '',
+                'body'  => $payload['notification']['body'] ?? ''
+            ]
+        ];
+
+        if (!empty($payload['data'])) {
+            $stringifiedData = [];
+            foreach ($payload['data'] as $k => $v) {
+                // If the value is an array or object, json_encode it. 
+                // FCM data payload strictly requires values to be strings.
+                $stringifiedData[$k] = is_array($v) ? json_encode($v) : (string)$v;
+            }
+            $message['data'] = $stringifiedData;
+        }
+
+        return $message;
     }
 
     /**
@@ -121,76 +148,79 @@ class FCMService
     }
 
     /**
-     * Sends a notification to a specific user (via token)
+     * Unified send method
+     * $target: ["type" => "all|single|multiple", "user_ids" => [1, 2, 3]]
+     */
+    public function sendNotification($payload, $target)
+    {
+        $fcmMessageTemplate = $this->formatPayloadForFCM($payload);
+
+        switch ($target['type']) {
+            case 'all':
+                $message = $fcmMessageTemplate;
+                $message['topic'] = 'all_users';
+                $result = $this->sendHttpRequest($message);
+                // For 'all', we might not store in notifications table per user,
+                // or we could iterate, but usually it's handled differently.
+                return $result;
+
+            case 'single':
+                $userId = $target['user_ids'][0];
+                $stmt = $this->pdo->prepare("SELECT fcm_token FROM users WHERE id = ?");
+                $stmt->execute([$userId]);
+                $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                if ($user && !empty($user['fcm_token'])) {
+                    $message = $fcmMessageTemplate;
+                    $message['token'] = $user['fcm_token'];
+                    $result = $this->sendHttpRequest($message);
+                    if ($result['success']) {
+                        $this->storeNotification($userId, $payload);
+                    }
+                    return $result;
+                }
+                return ['success' => false, 'error' => 'User not found or no FCM token'];
+
+            case 'multiple':
+                $userIds = $target['user_ids'];
+                if (empty($userIds)) return ['success' => false, 'error' => 'No user_ids provided'];
+
+                $placeholders = implode(',', array_fill(0, count($userIds), '?'));
+                $stmt = $this->pdo->prepare("SELECT id, fcm_token FROM users WHERE id IN ($placeholders)");
+                $stmt->execute($userIds);
+                $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                $results = [];
+                foreach ($users as $user) {
+                    if (!empty($user['fcm_token'])) {
+                        $message = $fcmMessageTemplate;
+                        $message['token'] = $user['fcm_token'];
+                        $res = $this->sendHttpRequest($message);
+                        if ($res['success']) {
+                            $this->storeNotification($user['id'], $payload);
+                        }
+                        $results[$user['id']] = $res;
+                    }
+                }
+                return ['success' => true, 'results' => $results];
+
+            default:
+                return ['success' => false, 'error' => 'Invalid target type'];
+        }
+    }
+
+    /**
+     * Legacy support (modified to use new structure internally if needed)
      */
     public function sendToUser($userId, $token, $payload)
     {
-        if (empty($token)) return false;
-
-        $message = [
-            'token' => $token,
-            'notification' => [
-                'title' => $payload['title'] ?? '',
-                'body' => $payload['body'] ?? ''
-            ]
-        ];
-
-        if (!empty($payload['data'])) {
-            // FCM requires all data values to be strings
-            $stringifiedData = [];
-            foreach ($payload['data'] as $k => $v) {
-                $stringifiedData[$k] = (string)$v;
-            }
-            $message['data'] = $stringifiedData;
-        }
-
-        $result = $this->sendHttpRequest($message);
-
-        if ($result['success']) {
-            $this->storeNotification($userId, $payload);
-        }
-
-        return $result;
+        return $this->sendNotification($payload, ['type' => 'single', 'user_ids' => [$userId]]);
     }
 
-    /**
-     * Send to multiple users
-     */
-    public function sendToMultipleUsers($users, $payload)
-    {
-        $results = [];
-        foreach ($users as $user) {
-            if (!empty($user['fcm_token'])) {
-                $results[$user['id']] = $this->sendToUser($user['id'], $user['fcm_token'], $payload);
-            }
-        }
-        return $results;
-    }
-
-    /**
-     * Send to a topic
-     */
     public function sendToTopic($topic, $payload)
     {
-        $message = [
-            'topic' => $topic,
-            'notification' => [
-                'title' => $payload['title'] ?? '',
-                'body' => $payload['body'] ?? ''
-            ]
-        ];
-
-        if (!empty($payload['data'])) {
-            $stringifiedData = [];
-            foreach ($payload['data'] as $k => $v) {
-                $stringifiedData[$k] = (string)$v;
-            }
-            $message['data'] = $stringifiedData;
-        }
-
-        // Topics usually don't target a specific user in DB, 
-        // storing depends on requirements, often skipped or stored with user_id=NULL.
-
+        $message = $this->formatPayloadForFCM($payload);
+        $message['topic'] = $topic;
         return $this->sendHttpRequest($message);
     }
 }

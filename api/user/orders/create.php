@@ -82,22 +82,29 @@ try {
 
     $conn->commit();
 
-    // --- NEW FCM LOGIC ---
+    // --- FCM NOTIFICATION ---
     try {
-        if (!empty($user['fcm_token'])) {
-            require_once "../../../helpers/FCMService.php";
-            $fcm = new FCMService($conn);
-            $fcm->sendToUser($user['id'], $user['fcm_token'], [
-                'title' => 'Order Placed Successfully',
-                'body' => "Your order #$order_id has been placed.",
-                'type' => 'order',
-                'data' => ['order_id' => (string)$order_id] // FCM data expects strings
-            ]);
-        }
+        require_once "../../../helpers/FCMService.php";
+        $fcm = new FCMService($conn);
+
+        $fcm->sendNotification(
+            [
+                'notification' => [
+                    'title' => 'Order Placed Successfully',
+                    'body'  => "Your order #$order_id has been placed and is pending confirmation.",
+                ],
+                'data' => [
+                    'type'   => 'ORDER',
+                    'entity' => ['type' => 'ORDER', 'id' => (int)$order_id],
+                    'extra'  => ['status' => 'pending'],
+                ],
+            ],
+            ['type' => 'single', 'user_ids' => [(int)$user['id']]]
+        );
     } catch (Exception $e) {
-        // Silently ignore notification failure so the order is still created successfully
+        // Silently ignore notification failure — order is already created successfully
     }
-    // --- END FCM LOGIC ---
+    // --- END FCM NOTIFICATION ---
 
     sendResponse(201, t('order_created'), [
         "order_id" => $order_id,

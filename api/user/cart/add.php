@@ -55,7 +55,7 @@ $requestedQty = (int)$data['quantity'];
 $totalQty     = $requestedQty;
 
 if ($totalQty > (int)$product['stock']) {
-    sendResponse(400, "Only {$product['stock']} items available");
+    sendResponse(400, t('only_items_available', null, ['count' => (int)$product['stock']]));
 }
 
 if ($existing) {

@@ -50,22 +50,29 @@ try {
 
     $conn->commit();
 
-    // --- NEW FCM LOGIC ---
+    // --- FCM NOTIFICATION ---
     try {
-        if (!empty($user['fcm_token'])) {
-            require_once "../../../helpers/FCMService.php";
-            $fcm = new FCMService($conn);
-            $fcm->sendToUser($user['id'], $user['fcm_token'], [
-                'title' => 'Order Cancelled',
-                'body' => "Your order #$order_id has been successfully cancelled.",
-                'type' => 'order',
-                'data' => ['order_id' => (string)$order_id, 'status' => 'cancelled'] // FCM data expects strings
-            ]);
-        }
+        require_once "../../../helpers/FCMService.php";
+        $fcm = new FCMService($conn);
+
+        $fcm->sendNotification(
+            [
+                'notification' => [
+                    'title' => 'Order Cancelled',
+                    'body'  => "Your order #$order_id has been successfully cancelled.",
+                ],
+                'data' => [
+                    'type'   => 'ORDER',
+                    'entity' => ['type' => 'ORDER', 'id' => $order_id],
+                    'extra'  => ['status' => 'cancelled'],
+                ],
+            ],
+            ['type' => 'single', 'user_ids' => [(int)$user['id']]]
+        );
     } catch (Exception $e) {
-        // Silently ignore notification failure so the order is still cancelled
+        // Silently ignore notification failure — order is already cancelled
     }
-    // --- END FCM LOGIC ---
+    // --- END FCM NOTIFICATION ---
 
     sendResponse(200, t('order_cancelled'), [
         "order_id" => $order_id,
