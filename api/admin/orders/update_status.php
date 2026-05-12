@@ -47,20 +47,13 @@ try {
         require_once "../../../helpers/FCMService.php";
         $fcm = new FCMService($conn);
 
-        $statusLabels = [
-            'pending'   => t('pending'),
-            'confirmed' => t('confirmed'),
-            'shipped'   => t('shipped'),
-            'delivered' => t('delivered'),
-            'cancelled' => t('cancelled'),
-        ];
-        $statusLabel = $statusLabels[$status] ?? ucfirst($status);
-
         $fcm->sendNotification(
             [
-                'notification' => [
-                    'title' => "Order #$order_id — $statusLabel",
-                    'body'  => "Your order status has been updated to: $status.",
+                'i18n' => [
+                    'lang' => 'auto',
+                    'title_key' => 'notif_order_status_updated_title',
+                    'body_key'  => 'notif_order_status_updated_body',
+                    'args'      => ['order_id' => (int)$order_id, 'status_key' => $status],
                 ],
                 'data' => [
                     'type'   => 'ORDER',
@@ -77,7 +70,8 @@ try {
 
     sendResponse(200, t('order_status_updated'), [
         "order_id" => $order_id,
-        "status" => $status
+        "status" => $status,
+        "status_label" => t($status, $lang)
     ]);
 
 } catch (Exception $e) {

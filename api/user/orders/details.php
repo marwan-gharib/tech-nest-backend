@@ -26,6 +26,8 @@ try {
         sendResponse(404, t('order_not_found'));
     }
 
+    $order['status_label'] = t((string)($order['status'] ?? ''), $lang);
+
     $name_col = ($lang === 'ar') ? "COALESCE(pt.name, p.name)" : "p.name";
 
     // 2. Fetch Order Items with product translations

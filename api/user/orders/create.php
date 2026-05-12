@@ -89,9 +89,11 @@ try {
 
         $fcm->sendNotification(
             [
-                'notification' => [
-                    'title' => 'Order Placed Successfully',
-                    'body'  => "Your order #$order_id has been placed and is pending confirmation.",
+                'i18n' => [
+                    'lang' => $lang,
+                    'title_key' => 'notif_order_placed_title',
+                    'body_key'  => 'notif_order_placed_body',
+                    'args'      => ['order_id' => (int)$order_id],
                 ],
                 'data' => [
                     'type'   => 'ORDER',
@@ -109,7 +111,8 @@ try {
     sendResponse(201, t('order_created'), [
         "order_id" => $order_id,
         "total_price" => $grandTotal,
-        "status" => "pending"
+        "status" => "pending",
+        "status_label" => t('pending', $lang)
     ]);
 
 } catch (Exception $e) {

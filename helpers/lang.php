@@ -181,6 +181,19 @@ function t(string $key, string $lang = null): string
             'broadcast_notification_sent' => 'Broadcast notification sent',
             'multiple_users_notification_sent' => 'Multiple users notification sent',
             'invalid_action'         => 'Invalid action. Use: order_update, new_product, or promo_multiple',
+
+            'notif_order_placed_title' => 'Order Placed Successfully',
+            'notif_order_placed_body'  => 'Your order #{order_id} has been placed and is pending confirmation.',
+            'notif_order_cancelled_title' => 'Order Cancelled',
+            'notif_order_cancelled_body'  => 'Your order #{order_id} has been successfully cancelled.',
+            'notif_order_status_updated_title' => 'Order #{order_id} — {status_label}',
+            'notif_order_status_updated_body'  => 'Your order status has been updated to: {status_label}.',
+            'notif_new_product_title' => 'New Product Available 🔥',
+            'notif_new_product_body'  => 'Tap to view the product.',
+            'notif_promo_title' => 'Special Offer! ⚡',
+            'notif_promo_body'  => 'Exclusive discount just for you!',
+            'notif_security_alert_title' => 'Security Alert 🔐',
+            'notif_security_alert_body'  => 'Your password was recently reset. If this was not you, contact support immediately.',
         ],
 
         /* ==================== ARABIC ==================== */
@@ -313,6 +326,19 @@ function t(string $key, string $lang = null): string
             'broadcast_notification_sent' => 'تم إرسال إشعار جماعي',
             'multiple_users_notification_sent' => 'تم إرسال إشعار لعدة مستخدمين',
             'invalid_action'         => 'إجراء غير صالح. استخدم: order_update أو new_product أو promo_multiple',
+
+            'notif_order_placed_title' => 'تم إنشاء الطلب بنجاح',
+            'notif_order_placed_body'  => 'تم تقديم طلبك رقم {order_id} وهو قيد انتظار التأكيد.',
+            'notif_order_cancelled_title' => 'تم إلغاء الطلب',
+            'notif_order_cancelled_body'  => 'تم إلغاء طلبك رقم {order_id} بنجاح.',
+            'notif_order_status_updated_title' => 'طلب رقم {order_id} — {status_label}',
+            'notif_order_status_updated_body'  => 'تم تحديث حالة طلبك إلى: {status_label}.',
+            'notif_new_product_title' => 'منتج جديد 🔥',
+            'notif_new_product_body'  => 'اضغط لمشاهدة المنتج.',
+            'notif_promo_title' => 'عرض خاص! ⚡',
+            'notif_promo_body'  => 'خصم حصري لك!',
+            'notif_security_alert_title' => 'تنبيه أمني 🔐',
+            'notif_security_alert_body'  => 'تمت إعادة تعيين كلمة المرور مؤخرًا. إذا لم تكن أنت، تواصل مع الدعم فورًا.',
         ],
     ];
 

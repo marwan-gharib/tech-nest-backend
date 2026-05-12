@@ -15,6 +15,12 @@ try {
     $stmt->execute([$user['id']]);
     $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+    foreach ($orders as &$order) {
+        $status = $order['status'] ?? '';
+        $order['status_label'] = t((string)$status, $lang);
+    }
+    unset($order);
+
     sendResponse(200, t('orders_retrieved'), [
         "orders" => $orders
     ]);

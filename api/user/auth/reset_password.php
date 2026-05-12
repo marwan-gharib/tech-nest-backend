@@ -2,6 +2,8 @@
 include "../../../config/database.php";
 include "../../../helpers/functions.php";
 
+$lang = getRequestedLang();
+
 $data = json_decode(file_get_contents("php://input"), true);
 
 if (
@@ -37,9 +39,11 @@ try {
 
         $fcm->sendNotification(
             [
-                'notification' => [
-                    'title' => 'Security Alert 🔐',
-                    'body'  => 'Your password was recently reset. If this was not you, contact support immediately.',
+                'i18n' => [
+                    'lang' => $lang,
+                    'title_key' => 'notif_security_alert_title',
+                    'body_key'  => 'notif_security_alert_body',
+                    'args'      => [],
                 ],
                 'data' => [
                     'type'   => 'RESET_PASSWORD',

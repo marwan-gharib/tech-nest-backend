@@ -3,6 +3,7 @@ include "../../../config/database.php";
 include "../../../helpers/functions.php";
 
 $admin = validateAdminToken($conn);
+$lang = getRequestedLang();
 
 if (
     empty($_POST['name']) ||
@@ -64,9 +65,11 @@ try {
 
         $fcm->sendNotification(
             [
-                'notification' => [
-                    'title' => 'New Product Available 🔥',
-                    'body'  => "Check out our new product: $name",
+                'i18n' => [
+                    'lang' => $lang,
+                    'title_key' => 'notif_new_product_title',
+                    'body_key'  => 'notif_new_product_body',
+                    'args'      => [],
                 ],
                 'data' => [
                     'type'   => 'PRODUCT',

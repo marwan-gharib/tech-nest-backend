@@ -8,6 +8,7 @@ include "../../../helpers/FCMService.php";
 
 $admin = validateAdminToken($conn);
 $fcm = new FCMService($conn);
+$lang = getRequestedLang();
 
 $action = $_GET['action'] ?? null;
 
@@ -16,13 +17,16 @@ switch ($action) {
         $userId = $_GET['user_id'] ?? null;
         $orderId = $_GET['order_id'] ?? '12345';
         $status = $_GET['status'] ?? 'Shipped';
+        $statusKey = strtolower((string)$status);
 
         if (!$userId) sendResponse(400, t('user_id_required'));
 
         $payload = [
-            "notification" => [
-                "title" => "Order #$orderId Update",
-                "body" => "Your order status has been updated to: $status"
+            "i18n" => [
+                'lang' => 'auto',
+                'title_key' => 'notif_order_status_updated_title',
+                'body_key'  => 'notif_order_status_updated_body',
+                'args'      => ['order_id' => (int)$orderId, 'status_key' => $statusKey],
             ],
             "data" => [
                 "type" => "ORDER_UPDATE",
@@ -49,9 +53,11 @@ switch ($action) {
         $productId = $_GET['product_id'] ?? 10;
         
         $payload = [
-            "notification" => [
-                "title" => "منتج جديد 🔥",
-                "body" => "اضغط تشوف المنتج"
+            "i18n" => [
+                'lang' => $lang,
+                'title_key' => 'notif_new_product_title',
+                'body_key'  => 'notif_new_product_body',
+                'args'      => [],
             ],
             "data" => [
                 "type" => "NEW_PRODUCT",
@@ -75,9 +81,11 @@ switch ($action) {
         $userIds = isset($_GET['user_ids']) ? explode(',', $_GET['user_ids']) : [1, 2];
 
         $payload = [
-            "notification" => [
-                "title" => "Special Offer! ⚡",
-                "body" => "Exclusive discount just for you!"
+            "i18n" => [
+                'lang' => $lang,
+                'title_key' => 'notif_promo_title',
+                'body_key'  => 'notif_promo_body',
+                'args'      => [],
             ],
             "data" => [
                 "type" => "PROMO",

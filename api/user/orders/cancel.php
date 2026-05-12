@@ -57,9 +57,11 @@ try {
 
         $fcm->sendNotification(
             [
-                'notification' => [
-                    'title' => 'Order Cancelled',
-                    'body'  => "Your order #$order_id has been successfully cancelled.",
+                'i18n' => [
+                    'lang' => $lang,
+                    'title_key' => 'notif_order_cancelled_title',
+                    'body_key'  => 'notif_order_cancelled_body',
+                    'args'      => ['order_id' => (int)$order_id],
                 ],
                 'data' => [
                     'type'   => 'ORDER',
@@ -76,7 +78,8 @@ try {
 
     sendResponse(200, t('order_cancelled'), [
         "order_id" => $order_id,
-        "status" => "cancelled"
+        "status" => "cancelled",
+        "status_label" => t('cancelled', $lang)
     ]);
 
 } catch (Exception $e) {
