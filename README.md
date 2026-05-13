@@ -15,6 +15,27 @@
 
 ---
 
+## 📑 Table of Contents
+
+- [🛒 Tech Nest — Backend API](#-tech-nest--backend-api)
+- [📖 What is Tech Nest?](#-what-is-tech-nest)
+- [✨ Features at a Glance](#-features-at-a-glance)
+- [🛠️ Tech Stack](#️-tech-stack)
+- [🏗️ Architecture Overview](#️-architecture-overview)
+- [🗄️ Database Schema](#️-database-schema)
+- [🔐 Authentication Flow](#-authentication-flow)
+- [📡 API Endpoints](#-api-endpoints)
+- [📬 Request & Response Conventions](#-request--response-conventions)
+- [📱 Flutter Integration Notes](#-flutter-integration-notes)
+- [🚀 Local Setup](#-local-setup)
+- [⚙️ Configuration](#️-configuration)
+- [🔒 Security Notes](#-security-notes)
+- [🔬 Advanced Behaviors](#-advanced-behaviors)
+- [🗺️ Future Improvements](#️-future-improvements)
+- [📄 License](#-license)
+
+---
+
 ## What is Tech Nest?
 
 Tech Nest is a full-featured REST API backend built in PHP, designed to power a Flutter mobile shopping app. It handles everything from user authentication and product browsing, to cart management, order processing, and real-time push notifications — all in Arabic and English.
