@@ -1,177 +1,384 @@
-# 🚀 Tech Nest Backend API
+<div align="center">
 
-Welcome to the **Tech Nest Backend API**! This project powers a modern tech e-commerce platform with a robust RESTful API built in PHP. It supports full user and admin flows, including product management, category systems, cart operations, protected routes, and email verification.
+# 🛒 Tech Nest — Backend API
 
----
+**Production-style PHP backend for a Flutter e-commerce mobile application.**
 
-## 📖 Table of Contents
-- [✨ Key Features](#-key-features)
-- [🏗️ System Architecture](#-system-architecture)
-- [🔐 Authentication & Authorization](#-authentication--authorization)
-- [📦 API Reference](#-api-reference)
-  - [User Endpoints](#user-endpoints)
-  - [Admin Endpoints](#admin-endpoints)
-- [🎨 Response Format](#-response-format)
-- [💻 Client-Side Implementation Guide](#-client-side-implementation-guide)
-- [⚙️ Setup & Installation](#️-setup--installation)
+<p>
+  <img alt="PHP" src="https://img.shields.io/badge/PHP-8.2-777BB4?style=for-the-badge&logo=php&logoColor=white"/>
+  <img alt="MySQL" src="https://img.shields.io/badge/MySQL-PDO-4479A1?style=for-the-badge&logo=mysql&logoColor=white"/>
+  <img alt="Firebase" src="https://img.shields.io/badge/Firebase-FCM-FFCA28?style=for-the-badge&logo=firebase&logoColor=black"/>
+  <img alt="License" src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge"/>
+</p>
+
+</div>
 
 ---
 
-## ✨ Key Features
-- **Dual Role System**: Separate authentication flows for Users and Admins.
-- **Secure Authentication**: Token-based security with automatic expiry.
-- **Full E-Commerce Stack**: Categories, Products, and Cart management.
-- **Advanced Filtering**: Product listing with search, category filtering, price range, and sorting.
-- **Email Verification**: Built-in verification with PHPMailer for user registration.
-- **Modern Performance**: Image processing with WebP conversion to ensure fast load times.
+## What is Tech Nest?
+
+Tech Nest is a full-featured REST API backend built in PHP, designed to power a Flutter mobile shopping app. It handles everything from user authentication and product browsing, to cart management, order processing, and real-time push notifications — all in Arabic and English.
+
+The API is split into two surfaces:
+
+- **`/api/user`** — Customer-facing endpoints
+- **`/api/admin`** — Admin management endpoints
 
 ---
 
-## 🏗️ System Architecture
-The API follows a modular structure where each endpoint is a standalone PHP file, making it easy to scale and debug.
-- **`/api/user`**: Public and protected consumer-facing endpoints.
-- **`/api/admin`**: Protected management endpoints.
-- **`/helpers`**: Core logic for authentication, email, and responses.
-- **`/config`**: Database configuration.
-- **`/uploads`**: Optimized WebP storage for images.
+## ✨ Features at a Glance
+
+| Feature | Details |
+|---|---|
+| 🔐 **Auth** | Registration, email verification, login, logout, password reset |
+| 🌍 **Localization** | Full Arabic / English support for responses and push notifications |
+| 📦 **Products & Categories** | Filtering, search, pagination, localized names |
+| 🛒 **Cart** | Live stock checks, quantity sync, auto-adjustment |
+| 📋 **Orders** | Transactional order creation, cancellation with stock restore |
+| 🔔 **Push Notifications** | Firebase FCM + MySQL persistence + deep-link payloads |
+| 🖼️ **Image Handling** | Upload validation, SHA-256 deduplication, WebP conversion |
+| 👮 **Admin Panel** | Full CRUD for products, categories, and order status management |
 
 ---
 
-## 🔐 Authentication & Authorization
+## 🛠️ Tech Stack
 
-The API uses custom HTTP headers for security.
-
-### 👤 User Authentication
-- **Header**: `token: <your_token>`
-- **Expiry**: Tokens are valid for 7 days.
-- **Status**: Account must be email-verified to use protected routes.
-
-### 🛡️ Admin Authentication
-- **Header**: `Token: Bearer <your_token>`
-- **Expiry**: Tokens are valid for 2 days.
+- **Runtime** — PHP 8.2 (procedural, file-based architecture)
+- **Database** — MySQL via PDO with prepared statements
+- **Email** — PHPMailer over SMTP
+- **Push Notifications** — Firebase Cloud Messaging HTTP v1
+- **Image Processing** — PHP GD (resize + WebP conversion)
+- **Server** — Apache with `.htaccess` auth header passthrough
+- **Containerization** — Docker (`php:8.2-apache`)
 
 ---
 
-## 📦 API Reference
+## 🏗️ Architecture Overview
 
-### User Endpoints
+Tech Nest is a **file-based, procedural, layered backend** — not a framework project. Each endpoint is a dedicated PHP file. Shared concerns are extracted into helper files.
 
-#### 🔑 Auth & Accounts
-| Endpoint | Method | Params Type | Description |
-| :--- | :--: | :--- | :--- |
-| `api/user/auth/register.php` | `POST` | `FormData` | Register with `name`, `email`, `password`, and `profile_image`. |
-| `api/user/auth/verify_email.php` | `POST` | `JSON` | Verify account using `email` and `verification_code`. |
-| `api/user/auth/login.php` | `POST` | `JSON` | Authenticate with `email` and `password`. |
-| `api/user/auth/forget_password.php` | `POST` | `JSON` | Request a password reset code for an `email`. |
-| `api/user/auth/reset_password.php` | `POST` | `JSON` | Reset password using `email`, `code`, and `new_password`. |
-| `api/user/auth/logout.php` | `POST` | `Header` | Invalidate current user token. |
+```
+┌─────────────────────────────────────────────┐
+│              Mobile App (Flutter)            │
+└────────────────────┬────────────────────────┘
+                     │ HTTP
+┌────────────────────▼────────────────────────┐
+│             API Layer (Apache)               │
+│   api/user/...          api/admin/...        │
+└────────────────────┬────────────────────────┘
+                     │
+┌────────────────────▼────────────────────────┐
+│          Shared Helpers Layer                │
+│  functions.php   FCMService.php   lang.php   │
+└────────────────────┬────────────────────────┘
+                     │
+┌────────────────────▼────────────────────────┐
+│           Infrastructure Layer               │
+│        config/database.php (PDO)             │
+└────────────────────┬────────────────────────┘
+                     │
+        ┌────────────┴────────────┐
+        ▼                         ▼
+   MySQL Database             uploads/
+   (Business Data)            (WebP Images)
+```
 
-#### 🛍️ Products & Categories
-| Endpoint | Method | Query Params | Description |
-| :--- | :--: | :--- | :--- |
-| `api/user/categories/list.php` | `GET` | - | Returns all categories. |
-| `api/user/products/list.php` | `GET` | `limit`, `page`, `category_id`, `search`, `min_price`, `max_price`, `sort`, `order` | Advanced product listing with pagination and filters. |
-| `api/user/products/searching_suggestions.php` | `GET` | `search_query` | Dynamic search suggestions (min 2 chars). |
-
-#### 🛒 Shopping Cart
-| Endpoint | Method | Params Type | Description |
-| :--- | :--: | :--- | :--- |
-| `api/user/cart/list.php` | `GET` | - | Get all items in user's cart. |
-| `api/user/cart/add.php` | `POST` | `JSON` | Add product to cart (`product_id`, `quantity`). |
-| `api/user/cart/update_quantity.php` | `POST` | `JSON` | Update item quantity (`id`, `quantity`). |
-| `api/user/cart/remove.php` | `POST` | `JSON` | Remove item from cart by its `id`. |
-| `api/user/cart/count.php` | `GET` | - | Returns total number of items in cart. |
+**Key design decisions:**
+- Endpoint-oriented routing by folder and filename — no centralized router
+- Thin controllers with inline SQL rather than separate service/repository classes
+- Stateless auth via DB-backed bearer tokens with expiry timestamps
+- Push notification failures are silently absorbed — core business logic is never blocked by FCM
 
 ---
+
+## 🗄️ Database Schema
+
+> See the interactive ERD diagram in the project documentation.
+
+### Tables Summary
+
+| Table | Purpose |
+|---|---|
+| `users` | Customer accounts, session tokens, FCM tokens, language preference |
+| `admins` | Admin credentials and session tokens |
+| `categories` | Product grouping metadata |
+| `categories_translations` | Localized (Arabic) category names |
+| `products` | Core product catalog with price, stock, and category |
+| `products_translations` | Localized product name and description |
+| `cart` | Per-user temporary shopping cart |
+| `orders` | Order headers with status and address data |
+| `order_items` | Snapshot of items and price at checkout time |
+| `notifications` | In-app notification history (independent of FCM delivery) |
+
+### Relationships
+
+```
+users ──< cart
+users ──< orders ──< order_items >── products
+users ──< notifications
+categories ──< products
+categories ──< categories_translations
+products ──< products_translations
+```
+
+### Database ERD Diagram
+<p align="center">
+  <img src="assets/database_diagram.png" width="100000" style="margin:8px;"/>
+</p>
+
+---
+
+## 🔐 Authentication Flow
+
+### User Auth
+
+Protected user endpoints require a custom header:
+```
+token: <user-token>
+```
+
+```
+Register → Email Verification Code (6-digit, 5 min TTL)
+        → Verify Email → Token issued (7-day TTL)
+        → Token sent on every protected request
+        → Logout clears token from DB
+```
+
+Token validation checks: token exists → matches a user row → not expired → account is verified.
+
+### Admin Auth
+
+Protected admin endpoints require:
+```
+Token: Bearer <admin-token>
+```
+
+Admin tokens have a 2-day TTL and are separated entirely from user tokens.
+
+---
+
+## 📡 API Endpoints
+
+### Public User Auth
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `api/user/auth/register.php` | `POST` | Register with profile image upload |
+| `api/user/auth/verify_email.php` | `POST` | Verify email using 6-digit code |
+| `api/user/auth/login.php` | `POST` | Login and receive token |
+| `api/user/auth/forget_password.php` | `POST` | Send password reset code |
+| `api/user/auth/reset_password.php` | `POST` | Reset password with verification code |
+
+### Protected User Endpoints
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `api/user/auth/logout.php` | `POST` | Invalidate session |
+| `api/user/categories/list.php` | `GET` | Localized category list |
+| `api/user/products/list.php` | `GET` | Filtered, paginated product listing |
+| `api/user/products/get_product.php` | `GET` | Single product with category info |
+| `api/user/products/searching_suggestions.php` | `GET` | Up to 10 autocomplete suggestions |
+| `api/user/cart/list.php` | `GET` | Cart items and totals |
+| `api/user/cart/add.php` | `POST` | Add or overwrite a cart item |
+| `api/user/cart/update_quantity.php` | `POST` | Stock-aware quantity update |
+| `api/user/cart/remove.php` | `POST` | Remove a cart item |
+| `api/user/cart/count.php` | `GET` | Number of unique cart lines |
+| `api/user/orders/create.php` | `POST` | Place order from cart (transactional) |
+| `api/user/orders/list.php` | `GET` | Current user's orders |
+| `api/user/orders/details.php` | `GET` | Single order with items |
+| `api/user/orders/cancel.php` | `GET` | Cancel pending order + restore stock |
+| `api/user/notifications/save_fcm_token.php` | `POST` | Register device push token |
+| `api/user/notifications/get_notifications.php` | `GET` | Paginated notification history |
+| `api/user/notifications/mark_notification_read.php` | `POST` | Mark one or all as read |
 
 ### Admin Endpoints
 
-#### 🛡 Admin Auth
-| Endpoint | Method | Params Type | Description |
-| :--- | :--: | :--- | :--- |
-| `api/admin/auth/login.php` | `POST` | `JSON` | Admin login to get bearer token. |
-
-#### 📂 Category Management
-| Endpoint | Method | Params Type | Description |
-| :--- | :--: | :--- | :--- |
-| `api/admin/categories/list.php` | `GET` | - | List all categories. |
-| `api/admin/categories/add.php` | `POST` | `FormData` | Add category with `name` and optional `category_image`. |
-| `api/admin/categories/update.php` | `POST` | `FormData` | Update category with `id`, `name`, and optional `category_image`. |
-| `api/admin/categories/delete.php` | `POST` | `JSON` | Delete category by `id`. |
-
-#### 📦 Product Management
-| Endpoint | Method | Params Type | Description |
-| :--- | :--: | :--- | :--- |
-| `api/admin/products/list.php` | `GET` | `limit`, `page`, etc. | Admin-view product listing. |
-| `api/admin/products/add.php` | `POST` | `FormData` | Add product with `name`, `price`, `stock`, `category_id`, `description`, and `product_image`. |
-| `api/admin/products/update.php` | `POST` | `FormData` | Update product details and image using `id`. |
-| `api/admin/products/delete.php` | `POST` | `JSON` | Delete product by `id`. |
+| Endpoint | Method | Description |
+|---|---|---|
+| `api/admin/auth/login.php` | `POST` | Admin login |
+| `api/admin/auth/logout.php` | `POST` | Admin logout |
+| `api/admin/auth/validate_token.php` | `GET` | Validate admin token |
+| `api/admin/categories/list.php` | `GET` | List all categories |
+| `api/admin/categories/add.php` | `POST` | Create category (with optional Arabic name + image) |
+| `api/admin/categories/update.php` | `POST` | Update category |
+| `api/admin/categories/delete.php` | `POST` | Delete category |
+| `api/admin/products/list.php` | `GET` | Paginated product list |
+| `api/admin/products/add.php` | `POST` | Create product (with optional translations + image) |
+| `api/admin/products/update.php` | `POST` | Update product |
+| `api/admin/products/delete.php` | `POST` | Delete product |
+| `api/admin/orders/update_status.php` | `POST` | Update order status |
 
 ---
 
-## 🎨 Response Format
+## 📬 Request & Response Conventions
 
-All responses follow a standard envelope structure:
+### Response Envelope
+
+All endpoints return a consistent JSON structure:
 
 ```json
 {
   "status": 200,
   "message": "Operation successful",
-  "data": {
-    "key": "value"
+  "data": {}
+}
+```
+
+### Common Status Codes
+
+| Code | Meaning |
+|---|---|
+| `200` | Success (fetch, update, logout) |
+| `201` | Resource created |
+| `400` | Validation failure or bad input |
+| `401` | Invalid or expired token / wrong credentials |
+| `403` | Forbidden state (e.g. unverified email) |
+| `404` | Record not found |
+| `409` | Conflict (duplicate email, duplicate category) |
+| `500` | Server error (DB, mail, image, JSON) |
+
+### Auth Headers
+
+```http
+# User endpoints
+token: <user-token>
+
+# Admin endpoints
+Token: Bearer <admin-token>
+
+# Localization
+lang: ar
+Accept-Language: ar
+```
+
+---
+
+## 📱 Flutter Integration Notes
+
+### Request Patterns
+
+| Use case | Content type |
+|---|---|
+| Login, cart, orders, password reset | `application/json` |
+| Profile image, product/category image uploads | `multipart/form-data` |
+| Listings, filters, single-item fetch | Query string parameters |
+
+### Localization
+
+The backend reads `lang` or `Accept-Language`. If the value starts with `ar`, Arabic content is returned from translation tables. FCM notifications are also localized per the user's stored `lang` preference.
+
+### Push Notification Payload
+
+```json
+{
+  "type": "order_update",
+  "entity": {
+    "type": "order",
+    "id": "41"
+  },
+  "extra": {
+    "status": "shipped"
   }
 }
 ```
 
-- **200/201**: Success.
-- **400**: Validation error or missing parameters.
-- **401**: Authentication failed (Invalid or expired token).
-- **404**: Resource not found.
-- **409**: Conflict (e.g., email already exists).
-- **500**: Internal server error.
+The payload is deep-link friendly — the Flutter app can navigate directly to the relevant screen.
 
 ---
 
-## 💻 Client-Side Implementation Guide
+## 🚀 Local Setup
 
-### Handling Form Data vs JSON
-- **JSON**: Used for data-only requests (Login, Cart updates, Deleting). Use `Content-Type: application/json`.
-- **Form Data**: Used when uploading files (Register, Adding Products). **Do NOT** set the `Content-Type` header manually in JavaScript (let the browser handle it with `Multipart/form-data`).
+### Laragon / XAMPP
 
-### Example: Product List with Filters
-```javascript
-const response = await fetch('http://localhost/tech-nest-backend/api/user/products/list.php?search=phone&min_price=100&sort=price&order=DESC', {
-  headers: {
-    'token': 'YOUR_USER_TOKEN'
-  }
-});
-const result = await response.json();
+1. Place the project in your web root (e.g. `C:\laragon\www\tech-nest-backend`)
+2. Start Apache and MySQL
+3. Create a MySQL database named `ecommerce_db`
+4. Import your SQL schema
+5. Ensure `uploads/` is writable by PHP
+6. Visit `http://localhost/tech-nest-backend/`
+
+
+> You still need a reachable MySQL instance and valid Firebase / SMTP credentials.
+
+---
+
+## ⚙️ Configuration
+
+This project does **not** use a `.env` file. All config is hardcoded and must be edited directly.
+
+### Database — `config/database.php`
+
+```php
+$db_host = 'localhost';
+$db_name = 'ecommerce_db';
+$db_user = 'root';
+$db_pass = '';
 ```
 
-### Example: File Upload (Registration)
-```javascript
-const formData = new FormData();
-formData.append('name', 'John Doe');
-formData.append('email', 'john@example.com');
-formData.append('password', 'secure123');
-formData.append('profile_image', imageFile);
+### SMTP Email — `helpers/functions.php`
 
-const response = await fetch('api/user/auth/register.php', {
-  method: 'POST',
-  body: formData
-});
+Edit the SMTP host, username, password, port, and from address inside both:
+- `sendVerificationEmail()`
+- `sendForgotPasswordEmail()`
+
+### Firebase Cloud Messaging
+
+Place your service account JSON at:
+
+```
+config/firebase_credentials.json
 ```
 
----
-
-## ⚙️ Setup & Installation
-
-1. **Environment**: Ensure you are running PHP 7.4+ and MySQL on XAMPP/WAMP.
-2. **Database**: Import the provided SQL schema into your MySQL server.
-3. **Config**: Update `config/database.php` with your local DB credentials.
-4. **Permissions**: Ensure the `uploads/` directory is writable for image storage.
-5. **Mail**: Update the SMTP credentials in `helpers/functions.php` to use your own email provider for verifications.
+Required fields: `project_id`, `client_email`, `private_key`.
 
 ---
 
-Designed with ❤️ for **Tech Nest**.
+## 🔒 Security Notes
+
+### What's protected
+
+- Passwords hashed with `PASSWORD_BCRYPT`
+- All protected endpoints require token validation with expiry enforcement
+- Admin and user token namespaces are fully separated
+- Image uploads are type-checked and converted to WebP
+- All SQL uses prepared PDO statements
+
+### Known risks to address before production
+
+- Database and SMTP credentials are hardcoded — move to environment variables
+- Firebase credentials are stored in the repository — exclude from version control
+- CORS is fully open (`Access-Control-Allow-Origin: *`) — restrict to known origins
+- No rate limiting on auth endpoints (login, verify, reset)
+- No refresh token strategy or token revocation list
+
+---
+
+## 🔬 Advanced Behaviors
+
+- **Image deduplication** — SHA-256 hash checked before saving any uploaded image
+- **Transactional order placement** — stock deduction and order creation happen atomically
+- **Transactional order cancellation** — stock is restored atomically on cancel
+- **Localized push notifications** — FCM payload is generated in the user's stored language
+- **Multi-target FCM delivery** — supports targeting all users, one user, or a list of users
+- **Notification persistence** — notifications are saved to MySQL regardless of FCM delivery outcome
+
+---
+
+## 🗺️ Future Improvements
+
+- Move all credentials to environment variables (`.env` + `vlucas/phpdotenv` or similar)
+- Replace file-based routing with a lightweight router or framework
+- Introduce service and repository classes
+- Add database migrations and seeders
+- Add refresh tokens and session/device management
+- Implement rate limiting and brute-force protection on auth endpoints
+- Move email and FCM delivery to queued background jobs
+- Add structured logging and audit trails
+- Add automated tests for auth, cart, and order flows
+- Standardize all endpoints to `Authorization: Bearer` header pattern
+
+---
+
+## 📄 License
+
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
