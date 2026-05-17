@@ -90,7 +90,7 @@ function sendResponse($status, $message, $data = null)
 function validateToken($conn)
 {
     $headers = getallheaders();
-    $token = $headers['token'] ?? null;
+    $token = $headers['token'] ?? $headers['Token'] ?? null;
 
     if (!$token) {
         sendResponse(401, t('token_required'));

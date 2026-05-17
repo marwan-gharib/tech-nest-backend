@@ -24,7 +24,6 @@ if (!in_array($status, $valid_statuses)) {
 }
 
 try {
-    // 1. Fetch order and user details
     $orderStmt = $conn->prepare("
         SELECT o.user_id, u.fcm_token 
         FROM orders o
@@ -38,11 +37,9 @@ try {
         sendResponse(404, t('order_not_found'));
     }
 
-    // 2. Update status
     $updateStmt = $conn->prepare("UPDATE orders SET status = ? WHERE id = ?");
     $updateStmt->execute([$status, $order_id]);
 
-    // --- FCM NOTIFICATION ---
     try {
         require_once "../../../helpers/FCMService.php";
         $fcm = new FCMService($conn);
@@ -50,7 +47,7 @@ try {
         $fcm->sendNotification(
             [
                 'i18n' => [
-                    'lang' => 'auto',
+                    'lang'      => 'auto',
                     'title_key' => 'notif_order_status_updated_title',
                     'body_key'  => 'notif_order_status_updated_body',
                     'args'      => ['order_id' => (int)$order_id, 'status_key' => $status],
@@ -63,14 +60,13 @@ try {
             ],
             ['type' => 'single', 'user_ids' => [$orderData['user_id']]]
         );
-    } catch (Exception $e) {
-        // Silently ignore notification failure — order update is already committed
+    } catch (\Throwable $e) {
+        error_log("[FCM ERROR] " . $e->getMessage());
     }
-    // --- END FCM NOTIFICATION ---
 
     sendResponse(200, t('order_status_updated'), [
         "order_id" => $order_id,
-        "status" => $status,
+        "status"   => $status,
         "status_label" => t($status, $lang)
     ]);
 
