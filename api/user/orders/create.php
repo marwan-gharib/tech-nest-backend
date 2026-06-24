@@ -97,6 +97,7 @@ try {
                 ],
                 'data' => [
                     'type'   => 'ORDER',
+                    'route'  => '/order/' . $order_id,
                     'entity' => ['type' => 'ORDER', 'id' => (int)$order_id],
                     'extra'  => ['status' => 'pending'],
                 ],
