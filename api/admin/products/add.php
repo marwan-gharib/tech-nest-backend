@@ -73,6 +73,7 @@ try {
                 ],
                 'data' => [
                     'type'   => 'PRODUCT',
+                    'route'  => '/product/' . $product_id,
                     'entity' => ['type' => 'PRODUCT', 'id' => (int)$product_id],
                 ],
             ],

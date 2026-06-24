@@ -65,6 +65,7 @@ try {
                 ],
                 'data' => [
                     'type'   => 'ORDER',
+                    'route'  => '/order/' . $order_id,
                     'entity' => ['type' => 'ORDER', 'id' => $order_id],
                     'extra'  => ['status' => 'cancelled'],
                 ],
