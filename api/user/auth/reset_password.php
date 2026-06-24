@@ -47,7 +47,6 @@ try {
                 ],
                 'data' => [
                     'type'   => 'RESET_PASSWORD',
-                    'route'  => '/login',
                     'entity' => ['type' => 'RESET_PASSWORD', 'id' => (int)$user['id']],
                     'extra'  => [],
                 ],

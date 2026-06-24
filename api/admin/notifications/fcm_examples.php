@@ -30,7 +30,6 @@ switch ($action) {
             ],
             "data" => [
                 "type" => "ORDER_UPDATE",
-                "route" => "/order/" . $orderId,
                 "entity" => [
                     "type" => "order",
                     "id" => (int)$orderId
@@ -62,7 +61,6 @@ switch ($action) {
             ],
             "data" => [
                 "type" => "NEW_PRODUCT",
-                "route" => "/product/" . $productId,
                 "entity" => [
                     "type" => "product",
                     "id" => (int)$productId
@@ -91,7 +89,6 @@ switch ($action) {
             ],
             "data" => [
                 "type" => "PROMO",
-                "route" => "/offers",
                 "entity" => [
                     "type" => "promotion",
                     "id" => 0
